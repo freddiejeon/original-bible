@@ -3,6 +3,8 @@
 히브리어: 학습용 표준 읽기. 중복 자음은 한 번만 표기한다.
 그리스어: 에라스무스식.
 """
+import hashlib
+import re
 import unicodedata as ud
 
 # ---------- 공통: 음소 토큰 → 한글 ----------
@@ -91,7 +93,7 @@ def _he_letters(word):
     return letters
 
 
-def hebrew(word):
+def hebrew(word, info=None):
     """모음 부호가 붙은 히브리어 단어(접두사 구분 '/' 없이)를 토큰으로 바꾼다."""
     L = _he_letters(word)
     n = len(L)
@@ -177,6 +179,9 @@ def hebrew(word):
     if n == 4 and L[0]['c'] == 'ו' and PATAH in L[0]['m'] and QAMETS in L[1]['m'] and DAGESH in L[1]['m'] and QAMETS in L[2]['m']:
         L[2]['v'] = 'o'
 
+    if info is not None:
+        info.extend(L)
+
     # 2단계: 토큰 생성
     tokens = []
     last_vowel, last_sheva_silent = None, False
@@ -246,6 +251,34 @@ def hebrew(word):
         elif SHEVA not in m or final:
             pass
     return tokens
+
+
+def clean(word):
+    """강세·표시 부호와 막켑을 뺀 형태. 음성 파일의 기준이다."""
+    return ud.normalize('NFC', re.sub('[͏֑-ֽ֯־ֿ׀׃-׆‍⁠/]', '', ud.normalize('NFD', word)))
+
+
+def audio_name(word):
+    return hashlib.sha1(clean(word).encode()).hexdigest()[:12]
+
+
+def spoken(word):
+    """음성 합성에 넘길 글자. 하나님의 이름은 전통 읽기로, 카메츠 하투프는 현대 음성이 오로 읽도록 홀렘으로 바꾼다."""
+    w = ud.normalize('NFD', clean(word))
+    L = _he_letters(w)
+    if ''.join(x['c'] for x in L).endswith('יהוה'):
+        pre = w[:w.index('י')]
+        if HIRIQ in L[-2]['m']:
+            return ud.normalize('NFC', pre + 'אֱלֹהִים')
+        return ud.normalize('NFC', pre + ('אדֹנָי' if PATAH in pre else 'אֲדֹנָי'))
+    info = []
+    hebrew(w, info)
+    out, i = [], -1
+    for ch in w:
+        if ch in CONS or ch == 'ש':
+            i += 1
+        out.append(HOLAM if ch == QAMETS and info[i]['v'] == 'o' else ch)
+    return ud.normalize('NFC', ''.join(out))
 
 
 # ---------- 그리스어 ----------
@@ -356,4 +389,8 @@ if __name__ == '__main__':
         if got != (lat, ko):
             bad += 1
             print('틀림', w, got, '기대', (lat, ko))
-    print(f'{len(tests) - bad}/{len(tests)} 통과')
+    for w, want in [('אָהֳלוֹ', 'אֹהֳלוֹ'), ('כָּל־', 'כֹּל'), ('יְהוָה֙', 'אֲדֹנָי'), ('וַיהוָה', 'וַאדֹנָי'), ('יֱהוִה֙', 'אֱלֹהִים'), ('בָּרָ֣א', 'בָּרָא')]:
+        if spoken(w) != ud.normalize('NFC', want):
+            bad += 1
+            print('틀림', w, spoken(w), '기대', want)
+    print(f'{len(tests) + 6 - bad}/{len(tests) + 6} 통과')

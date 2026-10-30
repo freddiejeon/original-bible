@@ -73,6 +73,8 @@ main { max-width: 1180px; margin: 0 auto; padding-block: 18px 80px;
 .sh-word.he { font-family: var(--he); direction: rtl; } .sh-word.gr { font-family: var(--gr); }
 .sh-pron { font-size: 15px; color: var(--accent); }
 .sh-pron small { color: var(--muted); font-size: 12.5px; margin-left: 6px; }
+.play { border: 1px solid var(--accent); border-radius: 4px; background: var(--tint); color: var(--ink); min-height: 40px; padding: 4px 14px; cursor: pointer; font-size: 14px; align-self: flex-start; }
+.play-err { margin: 0; font-size: 13px; color: var(--muted); }
 .close { margin-left: auto; flex: none; width: 40px; height: 40px; border: 1px solid var(--line); border-radius: 4px; background: transparent; cursor: pointer; font-size: 18px; }
 .seg { border-top: 1px solid var(--line); padding-top: 10px; display: flex; flex-direction: column; gap: 5px; }
 .seg-head { display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: baseline; }
@@ -123,6 +125,8 @@ details ul { padding-left: 18px; margin: 8px 0; display: flex; flex-direction: c
 const MANIFEST = JSON.parse(document.getElementById('manifest').textContent);
 const FLAT = MANIFEST.flatMap((p, pi) => p.chapters.map((id, ci) => ({ id, pi, ci })));
 const cache = {};
+const AUDIO = '__AUDIO__';
+let player = null;
 let DATA = null;
 const HELP = {
   he: {
@@ -257,9 +261,11 @@ function openWord(vi, wi, btn) {
   $('sheetIn').innerHTML = `<div class="sh-top"><div><div class="sh-word ${lang}">${esc(show(w.t, lang))}</div>` +
     `<div class="sh-pron">${esc(w.hg)}<small>${esc(w.tr)}</small></div></div>` +
     `<button class="close" id="close" aria-label="닫기">×</button></div>` +
+    (AUDIO && w.a ? `<button class="play" id="play">▶ 듣기</button>` : '') +
     (w.note ? `<p class="help">${esc(w.note)}</p>` : '') + segs + help;
   $('sheet').hidden = false;
   $('close').onclick = closeSheet;
+  if ($('play')) $('play').onclick = () => playWord(w.a);
   $('sheet').scrollTop = 0;
   $('close').focus({ preventScroll: true });
   // 누른 단어가 분석 창에 가리지 않게 한다
@@ -267,7 +273,15 @@ function openWord(vi, wi, btn) {
   const over = btn.getBoundingClientRect().bottom + 12 - $('sheet').getBoundingClientRect().top;
   if (over > 0) scrollBy(0, over);
 }
+function playWord(name) {
+  if (player) player.pause();
+  player = new Audio(AUDIO + name + '.mp3');
+  player.play().catch(() => {
+    if (!$('playErr') && $('play')) $('play').insertAdjacentHTML('afterend', '<p class="play-err" id="playErr">음성을 불러오지 못했습니다. 처음 듣는 단어는 인터넷 연결이 필요합니다.</p>');
+  });
+}
 function closeSheet() {
+  if (player) player.pause();
   $('sheet').hidden = true;
   document.querySelector('main').style.paddingBottom = '';
   const on = document.querySelector('.w.on');

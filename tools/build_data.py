@@ -143,7 +143,7 @@ def hebrew_word(el):
     plain = text.replace('/', '')
     toks = pron.hebrew(plain)
     word = {'t': plain, 'segs': segs, 'tr': pron.to_latin(toks), 'hg': pron.to_hangul(toks),
-            'gl': ' '.join(g.split(',')[0] for g in glosses if g)}
+            'gl': ' '.join(g.split(',')[0] for g in glosses if g), 'a': pron.audio_name(plain)}
     if morph[0] == 'A':
         word['note'] = '아람어입니다. 라반이 쓴 말로, 야곱이 히브리어로 부른 갈르엣과 같은 뜻인 "증거의 무더기"입니다.'
     if any(s.get('sid') == 'H3068' for s in segs):

@@ -7,6 +7,8 @@ from pathlib import Path
 ROOT = Path(__file__).parent.parent
 page = (ROOT / 'app' / 'template.html').read_text(encoding='utf-8').replace(
     '__MANIFEST__', (ROOT / 'build' / 'manifest.json').read_text(encoding='utf-8'))
+# 음성 파일은 설치형 사이트에만 있다. 게시본과 미리보기에는 듣기 버튼이 나오지 않는다.
+site_page, page = page.replace('__AUDIO__', 'audio/'), page.replace('__AUDIO__', '')
 (ROOT / 'dist').mkdir(exist_ok=True)
 (ROOT / 'dist' / 'original-bible.html').write_text(page, encoding='utf-8')
 shutil.copytree(ROOT / 'build' / 'parts', ROOT / 'dist' / 'parts', dirs_exist_ok=True)
@@ -30,7 +32,7 @@ shutil.copytree(ROOT / 'app' / 'icons', SITE / 'icons', dirs_exist_ok=True)
 (SITE / 'index.html').write_text(
     HEAD + '<link rel="manifest" href="manifest.webmanifest"><meta name="theme-color" content="#14557b">'
     '<link rel="apple-touch-icon" href="icons/icon-192.png"><meta name="apple-mobile-web-app-capable" content="yes">'
-    '</head><body>' + page +
+    '</head><body>' + site_page +
     "<script>if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js')</script></body></html>", encoding='utf-8')
 files = sorted(p.relative_to(SITE).as_posix() for p in SITE.rglob('*')
                if p.is_file() and p.name not in ('sw.js', '.nojekyll') and p.parts[len(SITE.parts)] != 'audio')
