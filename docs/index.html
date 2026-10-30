@@ -1,0 +1,292 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><style>body{margin:0}[hidden]{display:none!important}</style><link rel="manifest" href="manifest.webmanifest"><meta name="theme-color" content="#14557b"><link rel="apple-touch-icon" href="icons/icon-192.png"><meta name="apple-mobile-web-app-capable" content="yes"></head><body><title>원어 대조 성경</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=EB+Garamond:wght@400;500&family=GFS+Didot&family=Gowun+Batang:wght@400;700&family=IBM+Plex+Sans+KR:wght@400;500;600&family=Noto+Serif+Hebrew:wght@400;500&display=swap">
+<style>
+/* 레이아웃: 절마다 왼쪽(한국어·영어)과 오른쪽(원어) 대조, 좁은 화면에서는 한 줄로 쌓는다. 색은 테켈렛(청색 염료)과 진홍. */
+:root {
+  --paper: #eef2f3; --surface: #fbfcfc; --ink: #17232b; --muted: #55666f; --line: #cfd9dd;
+  --accent: #14557b; --tint: #dbe9f0; --verb: #97283d;
+  --ui: "IBM Plex Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+  --ko: "Gowun Batang", "AppleMyungjo", "Batang", serif;
+  --en: "EB Garamond", Georgia, serif;
+  --he: "Noto Serif Hebrew", "Times New Roman", serif;
+  --gr: "GFS Didot", "Times New Roman", serif;
+  --scale: 1;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --paper: #0f171c; --surface: #162229; --ink: #e5edf0; --muted: #9bacb6; --line: #2c3c45;
+  --accent: #82c4e6; --tint: #1b3443; --verb: #ec909f; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --paper: #0f171c; --surface: #162229; --ink: #e5edf0; --muted: #9bacb6; --line: #2c3c45;
+  --accent: #82c4e6; --tint: #1b3443; --verb: #ec909f; color-scheme: dark }
+* { box-sizing: border-box; }
+body { background: var(--paper); color: var(--ink); font: 15px/1.5 var(--ui); }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--surface); }
+button, select { font: inherit; color: inherit; }
+button:focus-visible, select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.bar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--surface); border-bottom: 1px solid var(--line);
+  padding: 10px max(16px, env(safe-area-inset-right, 0px)) 10px max(16px, env(safe-area-inset-left, 0px)); }
+.bar-in { max-width: 1180px; margin: 0 auto; display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; }
+.bar h1 { margin: 0; font: 700 17px/1.2 var(--ko); }
+select { background: var(--paper); border: 1px solid var(--line); border-radius: 4px; padding: 6px 8px; min-height: 36px; }
+.toggles { display: flex; flex-wrap: wrap; gap: 6px; margin-left: auto; }
+.chip { border: 1px solid var(--line); background: transparent; border-radius: 4px; padding: 5px 9px; min-height: 36px; font-size: 13px; cursor: pointer; color: var(--muted); }
+.nav { display: flex; gap: 6px; align-items: center; }
+.chip:disabled { opacity: .4; cursor: default; }
+.chip[aria-pressed="true"] { background: var(--tint); border-color: var(--accent); color: var(--ink); font-weight: 500; }
+
+main { max-width: 1180px; margin: 0 auto; padding-block: 18px 80px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.lead { color: var(--muted); font-size: 13px; margin: 0 0 14px; max-width: 70ch; }
+.lead b { color: var(--verb); font-weight: 600; }
+.verse { display: grid; grid-template-columns: 2.2rem minmax(0, 1fr); gap: 4px 10px; padding: 16px 0; border-bottom: 1px solid var(--line); }
+.num { color: var(--accent); font: 600 14px/1.9 var(--ui); font-variant-numeric: tabular-nums; }
+.body { min-width: 0; display: flex; flex-direction: column; gap: 12px; }
+.trans { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.ko { font: calc(17px * var(--scale))/1.7 var(--ko); margin: 0; word-break: keep-all; }
+.en { font: calc(17px * var(--scale))/1.5 var(--en); margin: 0; color: var(--muted); }
+
+.words { display: flex; flex-wrap: wrap; gap: 4px 2px; min-width: 0; }
+.words.he { direction: rtl; }
+.w { display: inline-flex; flex-direction: column; align-items: center; gap: 1px; padding: 4px 5px; border: 0; border-radius: 4px; background: transparent; cursor: pointer; text-align: center; }
+.w:hover { background: var(--tint); }
+.w.on { background: var(--tint); box-shadow: inset 0 -2px 0 var(--accent); }
+.w .o { line-height: 1.45; }
+.he .o { font: calc(25px * var(--scale))/1.5 var(--he); }
+.gr .o { font: calc(23px * var(--scale))/1.35 var(--gr); }
+.w.verb .o { color: var(--verb); }
+.w .p { font-size: 12px; color: var(--accent); direction: ltr; }
+.w .g { font-size: 11.5px; color: var(--muted); max-width: 9em; line-height: 1.3; word-break: keep-all; direction: ltr; }
+
+@media (min-width: 860px) {
+  .body { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr); gap: 20px; align-items: start; }
+  .body.solo { grid-template-columns: minmax(0, 1fr); }
+}
+
+.sheet { position: fixed; left: 0; right: 0; bottom: 0; z-index: 8; max-height: 72dvh; overflow-y: auto; background: var(--surface); border-top: 2px solid var(--accent);
+  padding: 14px max(16px, env(safe-area-inset-right, 0px)) calc(18px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); }
+.sheet-in { max-width: 680px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px; }
+.sh-top { display: flex; align-items: flex-start; gap: 12px; }
+.sh-word { font-size: 32px; line-height: 1.4; }
+.sh-word.he { font-family: var(--he); direction: rtl; } .sh-word.gr { font-family: var(--gr); }
+.sh-pron { font-size: 15px; color: var(--accent); }
+.sh-pron small { color: var(--muted); font-size: 12.5px; margin-left: 6px; }
+.close { margin-left: auto; flex: none; width: 40px; height: 40px; border: 1px solid var(--line); border-radius: 4px; background: transparent; cursor: pointer; font-size: 18px; }
+.seg { border-top: 1px solid var(--line); padding-top: 10px; display: flex; flex-direction: column; gap: 5px; }
+.seg-head { display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: baseline; }
+.seg-x { font-size: 22px; } .seg-x.he { font-family: var(--he); } .seg-x.gr { font-family: var(--gr); }
+.seg-ko { font-weight: 600; }
+.sid { font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.parse { display: flex; flex-wrap: wrap; gap: 4px; }
+.tag { font-size: 12.5px; padding: 1px 7px; border-radius: 3px; background: var(--tint); }
+.tag.pos { background: transparent; border: 1px solid var(--accent); color: var(--accent); }
+.def { font: 15.5px/1.45 var(--en); color: var(--muted); margin: 0; }
+.help { margin: 0; font-size: 13.5px; }
+.help b { font-weight: 600; }
+
+details { margin-top: 26px; color: var(--muted); font-size: 13px; }
+summary { cursor: pointer; min-height: 32px; }
+details ul { padding-left: 18px; margin: 8px 0; display: flex; flex-direction: column; gap: 5px; }
+@media (prefers-reduced-motion: no-preference) { .sheet { animation: rise .16s ease-out; } @keyframes rise { from { transform: translateY(16px); } } }
+</style>
+
+<header class="bar"><div class="bar-in">
+  <h1>원어 대조 성경</h1>
+  <div class="nav">
+    <button class="chip" id="prev" aria-label="이전 장">‹</button>
+    <select id="chapter" aria-label="장 선택"></select>
+    <button class="chip" id="next" aria-label="다음 장">›</button>
+  </div>
+  <div class="toggles" id="toggles"></div>
+</div></header>
+<main>
+  <p class="lead">원어 단어를 누르면 문법과 뜻이 나옵니다. <b>붉은 글자</b>는 동사입니다. 지금은 창세기 전체와 요한복음 1장이 들어 있습니다.</p>
+  <div id="verses"></div>
+  <details>
+    <summary>본문 출처와 한계</summary>
+    <ul>
+      <li>한국어: 개역한글 (getBible 배포본). 영어: King James Version (getBible 배포본).</li>
+      <li>히브리어: Westminster Leningrad Codex, 형태 분석은 Open Scriptures Hebrew Bible (CC BY 4.0).</li>
+      <li>헬라어: SBL Greek New Testament. Copyright © 2010 Society of Biblical Literature and Logos Bible Software. 형태 분석은 MorphGNT (CC BY-SA).</li>
+      <li>사전: Strong's Hebrew·Greek Dictionary (Open Scriptures 정리본, 공개 저작물).</li>
+      <li>한국어 뜻풀이와 문법 설명은 Claude가 쓴 초안이며 전문가 검토 전입니다. 뜻은 표제어 기준이라 문맥에 따른 번역과 다를 수 있습니다.</li>
+      <li>발음은 규칙으로 자동 생성합니다. 히브리어는 학습용 읽기로 겹자음을 한 번만 적고, 헬라어는 에라스무스식입니다.</li>
+    </ul>
+  </details>
+</main>
+<aside class="sheet" id="sheet" hidden aria-label="단어 분석"><div class="sheet-in" id="sheetIn"></div></aside>
+
+<script type="application/json" id="manifest">[{"file": "gen-01-11", "title": "창세기 1~11장", "chapters": ["창세기 1장", "창세기 2장", "창세기 3장", "창세기 4장", "창세기 5장", "창세기 6장", "창세기 7장", "창세기 8장", "창세기 9장", "창세기 10장", "창세기 11장"]}, {"file": "gen-12-25", "title": "창세기 12~25장", "chapters": ["창세기 12장", "창세기 13장", "창세기 14장", "창세기 15장", "창세기 16장", "창세기 17장", "창세기 18장", "창세기 19장", "창세기 20장", "창세기 21장", "창세기 22장", "창세기 23장", "창세기 24장", "창세기 25장"]}, {"file": "gen-26-50", "title": "창세기 26~50장", "chapters": ["창세기 26장", "창세기 27장", "창세기 28장", "창세기 29장", "창세기 30장", "창세기 31장", "창세기 32장", "창세기 33장", "창세기 34장", "창세기 35장", "창세기 36장", "창세기 37장", "창세기 38장", "창세기 39장", "창세기 40장", "창세기 41장", "창세기 42장", "창세기 43장", "창세기 44장", "창세기 45장", "창세기 46장", "창세기 47장", "창세기 48장", "창세기 49장", "창세기 50장"]}, {"file": "jhn-01", "title": "요한복음 1장", "chapters": ["요한복음 1장"]}]</script>
+<script>
+const MANIFEST = JSON.parse(document.getElementById('manifest').textContent);
+const FLAT = MANIFEST.flatMap((p, pi) => p.chapters.map((id, ci) => ({ id, pi, ci })));
+const cache = {};
+let DATA = null;
+const HELP = {
+  he: {
+    '칼': '가장 기본이 되는 동사 어간으로, 단순한 동작을 나타냅니다.',
+    '니팔': '수동이나 재귀의 뜻을 나타내는 어간입니다.',
+    '피엘': '동작을 강조하거나 어떤 상태로 만드는 뜻을 나타내는 어간입니다.',
+    '푸알': '피엘의 수동형입니다.',
+    '히필': '사역의 뜻, 곧 "~하게 하다"를 나타내는 어간입니다.',
+    '호팔': '히필의 수동형입니다.',
+    '히트파엘': '재귀나 상호 동작을 나타내는 어간입니다.',
+    '완료': '완결된 동작으로 봅니다. 시제보다 동작의 양상을 나타내며, 흔히 과거로 옮깁니다.',
+    '미완료': '진행 중이거나 아직 끝나지 않은 동작으로 봅니다. 흔히 미래나 반복으로 옮깁니다.',
+    '와우 연속 미완료': '이야기를 이어 가는 형태입니다. "그리고 ~했다"로 사건을 차례로 서술합니다. 창세기 1장의 "하나님이 이르시되"가 이 형태입니다.',
+    '와우 연속 완료': '앞선 미완료나 명령에 이어 앞으로 일어날 일을 잇는 형태입니다.',
+    '지시형': '3인칭에게 바라거나 명령하는 뜻입니다. "~있으라", "~하게 하라"로 옮깁니다.',
+    '권유형': '1인칭의 의지나 권유입니다. "~하자"로 옮깁니다.',
+    '명령형': '2인칭에게 하는 명령입니다.',
+    '능동 분사': '동작하는 사람이나 진행 중인 상태를 나타냅니다.',
+    '수동 분사': '동작을 받은 상태를 나타냅니다.',
+    '부정사 연계형': '동사의 명사적 형태로, 흔히 전치사와 함께 목적이나 때를 나타냅니다.',
+    '부정사 절대형': '동사의 뜻을 강조하거나 명령을 대신하는 형태입니다.',
+    '연계형': '뒤에 오는 명사와 묶여 "~의"라는 뜻이 됩니다.',
+    '쌍수': '둘씩 짝을 이루는 것을 나타내는 수입니다.',
+    '공성': '남성과 여성의 구분이 없는 형태입니다.',
+    '목적격 표지': '번역되지 않는 단어로, 뒤에 오는 말이 한정된 목적어임을 나타냅니다.',
+    '대명사 접미사': '명사나 전치사, 동사 끝에 붙는 대명사입니다.'
+  },
+  gr: {
+    '현재': '동작을 진행이나 반복으로 봅니다.',
+    '미완료': '과거에 계속되던 동작을 나타냅니다. 요한복음 1:1의 "ἦν"이 이 형태입니다.',
+    '미래': '앞으로 일어날 동작을 나타냅니다.',
+    '부정과거': '동작을 하나의 전체로 봅니다. 직설법에서는 흔히 과거로 옮깁니다.',
+    '현재완료': '끝난 동작의 결과가 지금까지 이어짐을 나타냅니다.',
+    '과거완료': '끝난 동작의 결과가 과거의 어느 시점까지 이어졌음을 나타냅니다.',
+    '능동태': '주어가 동작을 합니다.',
+    '중간태': '주어가 자신과 관련하여 동작합니다. 뜻은 능동으로 옮기는 동사도 많습니다.',
+    '수동태': '주어가 동작을 받습니다.',
+    '직설법': '사실을 서술합니다.',
+    '명령법': '명령이나 요청을 나타냅니다.',
+    '가정법': '가능성이나 목적을 나타냅니다. "ἵνα" 뒤에 자주 옵니다.',
+    '희구법': '소원이나 가능성을 나타냅니다.',
+    '부정사': '동사의 명사적 형태입니다.',
+    '분사': '동사의 형용사적 형태입니다.',
+    '주격': '주로 문장의 주어를 나타냅니다.',
+    '속격': '소유나 출처, 관계를 나타냅니다. "~의"로 자주 옮깁니다.',
+    '여격': '간접 목적어나 도구, 장소를 나타냅니다. "~에게", "~으로"로 자주 옮깁니다.',
+    '대격': '주로 직접 목적어를 나타냅니다.',
+    '호격': '부르는 말입니다.'
+  }
+};
+
+function load(key, fallback) { try { const v = localStorage.getItem('ob.' + key); return v === null ? fallback : JSON.parse(v); } catch (e) { return fallback; } }
+function save(key, val) { try { localStorage.setItem('ob.' + key, JSON.stringify(val)); } catch (e) {} }
+
+const state = Object.assign({ part: 0, ch: 0, ko: true, en: true, pron: true, gloss: true, accent: false, scale: 1 }, load('state', {}));
+if (!MANIFEST[state.part] || !MANIFEST[state.part].chapters[state.ch]) { state.part = 0; state.ch = 0; }
+const TOGGLES = [['ko', '개역한글'], ['en', 'KJV'], ['pron', '발음'], ['gloss', '뜻'], ['accent', '강세 부호']];
+const $ = id => document.getElementById(id);
+const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const noAccent = s => s.normalize('NFD').replace(/[֑-ֽֿ֯]/g, '').normalize('NFC');
+const show = (t, lang) => lang === 'he' && !state.accent ? noAccent(t) : t;
+
+function renderBar() {
+  $('chapter').innerHTML = MANIFEST.map((p, pi) => `<optgroup label="${esc(p.title)}">` + p.chapters.map((id, ci) =>
+    `<option value="${pi}:${ci}">${esc(id)}</option>`).join('') + '</optgroup>').join('');
+  $('toggles').innerHTML = TOGGLES.map(([k, label]) => `<button class="chip" data-t="${k}" aria-pressed="${!!state[k]}">${label}</button>`).join('') +
+    `<button class="chip" data-size="-1" aria-label="글자 작게">가−</button><button class="chip" data-size="1" aria-label="글자 크게">가+</button>`;
+}
+
+async function goTo(part, ch, top) {
+  closeSheet();
+  state.part = part; state.ch = ch; save('state', state);
+  $('chapter').value = part + ':' + ch;
+  const at = FLAT.findIndex(f => f.pi === part && f.ci === ch);
+  $('prev').disabled = at === 0; $('next').disabled = at === FLAT.length - 1;
+  try {
+    if (!cache[part]) {
+      $('verses').innerHTML = '<p class="lead">본문을 불러오는 중입니다.</p>';
+      const r = await fetch('parts/' + MANIFEST[part].file + '.json');
+      if (!r.ok) throw new Error(r.status);
+      cache[part] = await r.json();
+    }
+  } catch (e) {
+    $('verses').innerHTML = '<p class="lead">본문을 불러오지 못했습니다. 인터넷 연결을 확인한 뒤 다시 열어 주세요.</p>';
+    return;
+  }
+  if (state.part !== part || state.ch !== ch) return;
+  DATA = cache[part];
+  renderVerses();
+  if (top) scrollTo(0, 0);
+}
+function step(by) {
+  const at = FLAT.findIndex(f => f.pi === state.part && f.ci === state.ch), f = FLAT[at + by];
+  if (f) goTo(f.pi, f.ci, true);
+}
+
+function renderVerses() {
+  if (!DATA) return;
+  const c = DATA.chapters[state.ch];
+  const solo = !state.ko && !state.en;
+  $('verses').innerHTML = c.verses.map((v, vi) => {
+    const words = v.w.map((w, wi) => {
+      const verb = w.segs.some(s => s.pos === '동사');
+      return `<button class="w${verb ? ' verb' : ''}" data-v="${vi}" data-w="${wi}"><span class="o">${esc(show(w.t, c.lang))}</span>` +
+        (state.pron ? `<span class="p">${esc(w.hg)}</span>` : '') + (state.gloss ? `<span class="g">${esc(w.gl)}</span>` : '') + '</button>';
+    }).join('');
+    const trans = (state.ko ? `<p class="ko">${esc(v.ko)}</p>` : '') + (state.en ? `<p class="en">${esc(v.en)}</p>` : '');
+    return `<article class="verse"><div class="num">${v.n}</div><div class="body${solo ? ' solo' : ''}">` +
+      (solo ? '' : `<div class="trans">${trans}</div>`) + `<div class="words ${c.lang}">${words}</div></div></article>`;
+  }).join('');
+  document.documentElement.style.setProperty('--scale', state.scale);
+}
+
+function openWord(vi, wi, btn) {
+  const c = DATA.chapters[state.ch], w = c.verses[vi].w[wi], lang = c.lang;
+  document.querySelectorAll('.w.on').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on');
+  const terms = new Set();
+  const segs = w.segs.map(s => {
+    const e = s.sid ? DATA.lex[s.sid] : null;
+    s.parse.forEach(t => HELP[lang][t] && terms.add(t));
+    if (HELP[lang][s.pos]) terms.add(s.pos);
+    const head = e ? e.lemma : (s.name || '');
+    return `<section class="seg"><div class="seg-head"><span class="seg-x ${lang}" dir="auto">${esc(show(s.x, lang))}</span>` +
+      (s.ko ? `<span class="seg-ko">${esc(s.ko)}</span>` : '') +
+      (head && head !== s.x ? `<span class="seg-x ${lang}" dir="auto" style="font-size:17px">${esc(head)}</span>` : '') +
+      (s.sid ? `<span class="sid">Strong ${esc(s.sid)}</span>` : '') + `</div>` +
+      `<div class="parse"><span class="tag pos">${esc(s.pos)}</span>${s.parse.map(p => `<span class="tag">${esc(p)}</span>`).join('')}</div>` +
+      (e && e.def ? `<p class="def" lang="en">${esc(e.def.trim())}</p>` : '') + `</section>`;
+  }).join('');
+  const help = [...terms].map(t => `<p class="help"><b>${esc(t)}</b>: ${esc(HELP[lang][t])}</p>`).join('');
+  $('sheetIn').innerHTML = `<div class="sh-top"><div><div class="sh-word ${lang}">${esc(show(w.t, lang))}</div>` +
+    `<div class="sh-pron">${esc(w.hg)}<small>${esc(w.tr)}</small></div></div>` +
+    `<button class="close" id="close" aria-label="닫기">×</button></div>` +
+    (w.note ? `<p class="help">${esc(w.note)}</p>` : '') + segs + help;
+  $('sheet').hidden = false;
+  $('close').onclick = closeSheet;
+  $('sheet').scrollTop = 0;
+  $('close').focus({ preventScroll: true });
+  // 누른 단어가 분석 창에 가리지 않게 한다
+  document.querySelector('main').style.paddingBottom = '76dvh';
+  const over = btn.getBoundingClientRect().bottom + 12 - $('sheet').getBoundingClientRect().top;
+  if (over > 0) scrollBy(0, over);
+}
+function closeSheet() {
+  $('sheet').hidden = true;
+  document.querySelector('main').style.paddingBottom = '';
+  const on = document.querySelector('.w.on');
+  if (on) { on.classList.remove('on'); on.focus({ preventScroll: true }); }
+}
+
+$('chapter').addEventListener('change', e => { const [p, c] = e.target.value.split(':').map(Number); goTo(p, c, true); });
+$('prev').addEventListener('click', () => step(-1));
+$('next').addEventListener('click', () => step(1));
+$('toggles').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  if (b.dataset.t) { state[b.dataset.t] = !state[b.dataset.t]; b.setAttribute('aria-pressed', state[b.dataset.t]); renderVerses(); }
+  if (b.dataset.size) { state.scale = Math.min(1.5, Math.max(.8, +(state.scale + b.dataset.size * .1).toFixed(1))); document.documentElement.style.setProperty('--scale', state.scale); }
+  save('state', state);
+});
+$('verses').addEventListener('click', e => { const b = e.target.closest('.w'); if (b) openWord(+b.dataset.v, +b.dataset.w, b); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('sheet').hidden) closeSheet(); });
+renderBar();
+document.documentElement.style.setProperty('--scale', state.scale);
+goTo(state.part, state.ch);
+</script>
+<script>if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js')</script></body></html>

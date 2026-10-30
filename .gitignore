@@ -1,0 +1,8 @@
+.secrets/
+.claude/
+data/raw/
+build/
+dist/
+tools/_missing.txt
+__pycache__/
+CLAUDE.md
