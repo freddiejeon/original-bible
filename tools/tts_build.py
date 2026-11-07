@@ -1,4 +1,4 @@
-"""창세기의 모든 히브리어 형태를 Google Cloud TTS로 만들어 docs/audio/에 넣는다. 이미 있는 파일은 건너뛴다.
+"""수록된 모든 히브리어 형태를 Google Cloud TTS로 만들어 docs/audio/에 넣는다. 이미 있는 파일은 건너뛴다.
 
 키는 .secrets/google_tts_key.txt 또는 환경 변수 GOOGLE_TTS_API_KEY에서 읽는다.
 사용법: python tts_build.py [개수 제한]
@@ -44,11 +44,13 @@ def synth(item):
 
 def main():
     forms = {}
-    for part in sorted((ROOT / 'build' / 'parts').glob('gen-*.json')):
+    for part in sorted((ROOT / 'build' / 'parts').glob('*.json')):
         for c in json.loads(part.read_text(encoding='utf-8'))['chapters']:
+            if c['lang'] != 'he':
+                continue
             for v in c['verses']:
                 for w in v['w']:
-                    forms[w['a']] = pron.spoken(w['t'])
+                    forms[w['a']] = w.get('sp') or pron.spoken(w['t'])
     OUT.mkdir(parents=True, exist_ok=True)
     todo = [(n, t) for n, t in forms.items() if not (OUT / f'{n}.mp3').exists()]
     if len(sys.argv) > 1:

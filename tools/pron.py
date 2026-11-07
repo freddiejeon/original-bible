@@ -93,8 +93,12 @@ def _he_letters(word):
     return letters
 
 
-def hebrew(word, info=None):
-    """모음 부호가 붙은 히브리어 단어(접두사 구분 '/' 없이)를 토큰으로 바꾼다."""
+def hebrew(word, info=None, force=None):
+    """모음 부호가 붙은 히브리어 단어(접두사 구분 '/' 없이)를 토큰으로 바꾼다.
+
+    force: {글자 번호: 'o' | 'a' | 'e'}. 형태 분석으로 정한 읽기(카메츠 하투프 o, 긴 카메츠 a, 소리 나는 슈와 e)를
+    규칙보다 앞세운다. 번호는 자음 글자 기준(0부터)이다.
+    """
     L = _he_letters(word)
     n = len(L)
     # 하나님의 이름은 기록된 자음대로 읽지 않고 전통 읽기를 적는다
@@ -178,6 +182,19 @@ def hebrew(word, info=None):
     # 와우 연속 미완료 중공 동사의 끝 카메츠는 짧은 o: וַיָּקָם (바야콤)
     if n == 4 and L[0]['c'] == 'ו' and PATAH in L[0]['m'] and QAMETS in L[1]['m'] and DAGESH in L[1]['m'] and QAMETS in L[2]['m']:
         L[2]['v'] = 'o'
+    cons = ''.join(x['c'] for x in L)
+    # 휴지형 카메츠 뒤라도 닫힌 음절: מִלְמָעְלָה (밀마알라), וְיָשְׁפֵה (베야쉬페)
+    for i, x in enumerate(L):
+        if SHEVA in x['m'] and i and QAMETS in L[i - 1]['m'] and cons[i - 1:i + 3] in ('מעלה', 'ישפה'):
+            x['closed'] = True
+    # 두 강세 형태 פָּנָֽיַ: 끝 요드의 파타는 읽지 않는다 (파나이)
+    if n >= 3 and cons[-1] == 'י' and PATAH in L[-1]['m'] and QAMETS in L[-2]['m']:
+        L[-1]['v'] = None
+    for i, v in (force or {}).items():
+        if v == 'e':
+            L[i]['vocal'] = True
+        else:
+            L[i]['v'] = v
 
     if info is not None:
         info.extend(L)
@@ -204,14 +221,14 @@ def hebrew(word, info=None):
         else:
             lat, key = CONS[c]
         vowel = x['v']
-        final = i == n - 1
-        # 뒤 따르는 묵음 모음 문자 포함 판단
+        # 뒤에 묵음 글자만 남았으면 끝 글자로 본다: שָׁוְא (샤브)
+        final = i == n - 1 or (i == n - 2 and L[n - 1]['silent'] and L[n - 1]['c'] == 'א')
         if not vowel and SHEVA in m and not final:
-            vocal = not x['closed'] and (
+            vocal = x.get('vocal') or not x['closed'] and (
                 i == 0
                 or (dag and last_vowel is not None and tokens)   # 강 다게쉬
                 or (i + 1 < n and L[i + 1]['c'] == c)            # 같은 자음 사이: 힌네니 → 히네니
-                or (c == 'י' and i == 1 and L[0]['c'] == 'ה' and PATAH in L[0]['m'])   # 정관사 뒤 הַיְ
+                or (c == 'י' and L[i - 1]['c'] == 'ה' and PATAH in L[i - 1]['m'] and (i == 1 or i == 2 and L[0]['c'] == 'ו'))   # 정관사 뒤 הַיְ, וְהַיְ
                 or (last_vowel == 'long' and c != 'י')          # 카메츠 뒤 요드 슈와는 묵음: 라일라, 하이타
                 or last_sheva_silent
                 or (c == 'י' and i == 1 and L[0]['c'] == 'ו')   # 와우 연속형 וַיְ
@@ -262,7 +279,7 @@ def audio_name(word):
     return hashlib.sha1(clean(word).encode()).hexdigest()[:12]
 
 
-def spoken(word):
+def spoken(word, force=None):
     """음성 합성에 넘길 글자. 하나님의 이름은 전통 읽기로, 카메츠 하투프는 현대 음성이 오로 읽도록 홀렘으로 바꾼다."""
     w = ud.normalize('NFD', clean(word))
     L = _he_letters(w)
@@ -272,12 +289,14 @@ def spoken(word):
             return ud.normalize('NFC', pre + 'אֱלֹהִים')
         return ud.normalize('NFC', pre + ('אדֹנָי' if PATAH in pre else 'אֲדֹנָי'))
     info = []
-    hebrew(w, info)
+    hebrew(w, info, force)
     out, i = [], -1
     for ch in w:
         if ch in CONS or ch == 'ש':
             i += 1
-        out.append(HOLAM if ch == QAMETS and info[i]['v'] == 'o' else ch)
+        if ch == PATAH and i == len(info) - 1 and info[i]['c'] == 'י' and info[i]['v'] is None:
+            continue                                   # פָּנָֽיַ 의 끝 파타
+        out.append(HOLAM if ch in (QAMETS, QATAN) and info[i]['v'] == 'o' else ch)
     return ud.normalize('NFC', ''.join(out))
 
 
@@ -381,6 +400,16 @@ if __name__ == '__main__':
         (hebrew, 'לְהָרְגֶךָ', 'lehorgekha', '레호르게카'), (hebrew, 'כְּשָׁמְעָם', "keshom'am", '케숌암'), (hebrew, 'בָּטְנִים', 'botnim', '보트님'),
         (hebrew, 'נָחְנוּ', 'nachnu', '나흐누'), (hebrew, 'וְיֵאָמְנוּ', "veye'amenu", '베예아메누'), (hebrew, 'בְּהֵאָבְקוֹ', "behe'aveqo", '베헤아베코'),
         (hebrew, 'וָאָרְדְּ', "va'ard", '바아르드'), (hebrew, 'יָחְנְךָ', 'yochnekha', '요흐네카'), (hebrew, 'הִתְמַהְמָהְנוּ', 'hitmahmahnu', '히트마흐마흐누'),
+        (hebrew, 'לַשָּׁוְא', 'lashav', '라샤브'), (hebrew, 'מִלְמָעְלָה', 'milmala', '밀말라'), (hebrew, 'וְיָשְׁפֵה', 'veyashfe', '베야쉬페'),
+        (hebrew, 'פָּנָיַ', 'panay', '파나이'), (hebrew, 'וְהַיְבוּסִי', 'vehayevusi', '베하예부시'),
+        # 형태 분석 힌트(build_data.pron_hints): 칼 부정사, 호팔, 표제어 o, 막켑, 분사의 긴 카메츠, 전치사+관사 뒤 요드
+        (lambda w: hebrew(w, force={1: 'o'}), 'לְשָׁכְנִי', 'leshokhni', '레쇼크니'),
+        (lambda w: hebrew(w, force={0: 'o'}), 'מָשְׁזָר', 'moshzar', '모쉬자르'),
+        (lambda w: hebrew(w, force={0: 'o', 1: 'o'}), 'תָעָבְדֵם', "to'ovdem", '토오브뎀'),
+        (lambda w: hebrew(w, force={0: 'o'}), 'חָכְמָה', 'chokhma', '호크마'),
+        (lambda w: hebrew(w, force={1: 'o'}), 'שְׁמָר', 'shemor', '셰모르'),
+        (lambda w: hebrew(w, force={1: 'a'}), 'מְשָׁרְתוֹ', 'meshareto', '메샤레토'),
+        (lambda w: hebrew(w, force={1: 'e'}), 'בַּיְאֹר', "baye'or", '바예오르'),
     ]
     bad = 0
     for fn, w, lat, ko in tests:
@@ -389,8 +418,11 @@ if __name__ == '__main__':
         if got != (lat, ko):
             bad += 1
             print('틀림', w, got, '기대', (lat, ko))
+    if spoken('לְחָק', {1: 'o'}) != ud.normalize('NFC', 'לְחֹק') or spoken('פָּנָיַ') != ud.normalize('NFC', 'פָּנָי'):
+        bad += 1
+        print('틀림 spoken force')
     for w, want in [('אָהֳלוֹ', 'אֹהֳלוֹ'), ('כָּל־', 'כֹּל'), ('יְהוָה֙', 'אֲדֹנָי'), ('וַיהוָה', 'וַאדֹנָי'), ('יֱהוִה֙', 'אֱלֹהִים'), ('בָּרָ֣א', 'בָּרָא')]:
         if spoken(w) != ud.normalize('NFC', want):
             bad += 1
             print('틀림', w, spoken(w), '기대', want)
-    print(f'{len(tests) + 6 - bad}/{len(tests) + 6} 통과')
+    print(f'{len(tests) + 7 - bad}/{len(tests) + 7} 통과')

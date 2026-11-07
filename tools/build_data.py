@@ -1,7 +1,7 @@
 """공개 원본 자료를 앱용 데이터로 변환한다.
 
 사용법: python build_data.py <원본 폴더> <출력 폴더>
-원본 폴더: Gen.xml, Jn.txt, heb.js, grc.js, {korean,kjv}-{권}-{장}.json
+원본 폴더: 책별 WLC xml(Gen.xml, Exod.xml…), 책별 MorphGNT txt(Jn.txt…), heb.js, grc.js, {korean,kjv}-{권}-{장}.json
 """
 import json
 import re
@@ -141,9 +141,9 @@ def hebrew_word(el):
                 glosses.append(seg['ko'])
         segs.append(seg)
     plain = text.replace('/', '')
-    toks = pron.hebrew(plain)
-    word = {'t': plain, 'segs': segs, 'tr': pron.to_latin(toks), 'hg': pron.to_hangul(toks),
-            'gl': ' '.join(g.split(',')[0] for g in glosses if g), 'a': pron.audio_name(plain)}
+    word = {'t': plain, 'segs': segs, 'gl': ' '.join(g.split(',')[0] for g in glosses if g),
+            '_ctx': (pieces, codes, [s.get('sid') for s in segs])}
+    set_pron(word)
     if morph[0] == 'A':
         word['note'] = '아람어입니다. 라반이 쓴 말로, 야곱이 히브리어로 부른 갈르엣과 같은 뜻인 "증거의 무더기"입니다.'
     if any(s.get('sid') == 'H3068' for s in segs):
@@ -153,17 +153,101 @@ def hebrew_word(el):
     return word
 
 
-HEB_ROOT = ET.parse(RAW / 'Gen.xml').getroot()
+# 카메츠+슈와가 늘 카메츠 하투프(o)인 낱말: 첫 어근 글자의 카메츠를 o로 읽는다
+HATUF_SID = {'H6944', 'H2451', 'H5797', 'H2706', 'H3801', 'H4888', 'H7141', 'H7145', 'H2670', 'H6195', 'H70'}
+O_MARKS = {pron.HOLAM, pron.HOLAM_H, pron.QATAN, pron.HQAM, pron.QUBUTS}
+
+
+def lemma_has_o(sid, c):
+    """표제어에서 글자 c(앞 세 글자 안)가 o 모음을 가지는가: חֹק, עֹז, קִנָּמוֹן"""
+    lem = pron._he_letters(LEX_HE[sid].get('lemma') or '') if sid in LEX_HE else []
+    return any(y['c'] == c and (y['m'] & O_MARKS or j + 1 < len(lem) and lem[j + 1]['c'] == 'ו' and pron.HOLAM in lem[j + 1]['m'])
+               for j, y in enumerate(lem[:4]))
+
+
+def pron_hints(pieces, codes, sids, maqqef):
+    """형태 분석으로 카메츠 하투프 등 규칙만으로 정하기 어려운 읽기를 글자 번호별로 정한다."""
+    force, start, keep_long = {}, 0, False
+    nseg = len(pieces)
+    for k, code in enumerate(codes):
+        L = pron._he_letters(pieces[k]) if k < nseg else []
+        sid = sids[k] if k < len(sids) else None
+        qs = [j for j in range(len(L)) if pron.QAMETS in L[j]['m']]
+        first_qs = next((j for j in qs if j + 1 < len(L) and pron.SHEVA in L[j + 1]['m']), None)
+        if code[0] == 'V' and len(code) > 2:
+            stem, conj = code[1], code[2]
+            if stem == 'q' and conj == 'c' and first_qs is not None:          # 칼 부정사 연계형: לְשָׁכְנִי (레쇼크니)
+                force[start + first_qs] = 'o'
+            elif stem == 'H' and qs and qs[0] == 0:                            # 호팔 접두 모음: מָשְׁזָר (모쉬자르)
+                j = qs[0]
+                force[start + j] = 'o'
+                if j + 1 < len(L) and L[j + 1]['c'] in 'אהחע' and pron.QAMETS in L[j + 1]['m']:
+                    force[start + j + 1] = 'o'                                # תָעָבְדֵם (토오브뎀)
+            elif conj in 'pqrs' and first_qs is not None:                     # 분사·완료의 긴 카메츠: מְשָׁרְתוֹ (메샤레토)
+                force[start + first_qs] = 'a'
+            if conj in 'pqrs':
+                keep_long = True
+        elif code[0] in 'NA' and sid:
+            if sid in HATUF_SID and qs and qs[0] == 0:                        # קָדְשֶׁךָ, קָֽדָשִׁים (코다쉼)
+                force[start] = 'o'
+            elif first_qs is not None and lemma_has_o(sid, L[first_qs]['c']):
+                force[start + first_qs] = 'o'                                 # 표제어가 o인 명사: אָבְנַיִם (오브나임)
+            if k == nseg - 1 and not lemma_has_o(sid, L[-2]['c'] if len(L) > 1 else ''):
+                keep_long = True                                              # הָעָם־ 은 그대로 (하암)
+        if code[0] == 'R' and code[1:2] == 'd' and k + 1 < nseg:               # 전치사+관사 뒤 요드 슈와: בַּיְאֹר (바예오르)
+            nl = pron._he_letters(pieces[k + 1])
+            if nl and nl[0]['c'] == 'י' and pron.SHEVA in nl[0]['m']:
+                force[start + len(L)] = 'e'
+        start += len(L)
+    if maqqef and not keep_long:                                                                 # 막켑 앞 닫힌 끝 음절: חָק־ (호크), שְׁמָר־ (셰모르)
+        L = pron._he_letters(''.join(pieces))
+        n = len(L)
+        if n >= 2 and pron.QAMETS in L[n - 2]['m'] and not any(v in L[n - 1]['m'] for v in pron.VOWELS)                 and not (L[n - 1]['c'] in 'אהו' and pron.DAGESH not in L[n - 1]['m']) and force.get(n - 2) != 'a':
+            force[n - 2] = 'o'
+    return force
+
+
+def set_pron(word, maqqef=False):
+    pieces, codes, sids = word['_ctx']
+    plain = ''.join(pieces)
+    force = pron_hints(pieces, codes, sids, maqqef)
+    toks = pron.hebrew(plain, force=force)
+    word['tr'], word['hg'] = pron.to_latin(toks), pron.to_hangul(toks)
+    base = pron.hebrew(plain)
+    # 읽기가 규칙만의 결과와 다르면 음성 파일도 따로 만든다
+    if base != toks:
+        word['sp'] = pron.spoken(plain, force)
+        word['a'] = pron.audio_name(word['sp'])
+    else:
+        word.pop('sp', None)
+        word['a'] = pron.audio_name(plain)
+
+
+HEB_ROOTS = {}
 OSIS = '{http://www.bibletechnologies.net/2003/OSIS/namespace}'
 
 
-def parse_hebrew(ch):
+def to_translation_ref(book, c, v):
+    """히브리어 성경의 장:절을 번역본(개역한글·KJV) 번호로 바꾼다."""
+    if book == 'Gen':   # 히브리어 32:1이 번역본의 31:55이고 32장은 한 칸씩 당겨진다
+        return (31, 55) if (c, v) == (32, 1) else (32, v - 1) if c == 32 else (c, v)
+    if book == 'Exod':  # 히브리어 7:26~29가 번역본 8:1~4, 21:37이 22:1이다
+        if c == 7 and v >= 26:
+            return 8, v - 25
+        if c == 21 and v == 37:
+            return 22, 1
+        return (c, v + 4) if c == 8 else (c, v + 1) if c == 22 else (c, v)
+    return c, v
+
+
+def parse_hebrew(src, ch):
+    if src not in HEB_ROOTS:
+        HEB_ROOTS[src] = ET.parse(RAW / src).getroot()
     verses = {}
-    for vs in HEB_ROOT.iter(OSIS + 'verse'):
+    for vs in HEB_ROOTS[src].iter(OSIS + 'verse'):
         osis = vs.get('osisID').split('.')
         he_ch, he_v = int(osis[1]), int(osis[2])
-        # 히브리어 32:1이 번역본의 31:55이고 32장은 한 칸씩 당겨진다. 번역본 번호에 맞춘다
-        v_ch, v_n = (31, 55) if (he_ch, he_v) == (32, 1) else (32, he_v - 1) if he_ch == 32 else (he_ch, he_v)
+        v_ch, v_n = to_translation_ref(osis[0], he_ch, he_v)
         if v_ch != ch:
             continue
         words, ketiv = [], None
@@ -171,6 +255,7 @@ def parse_hebrew(ch):
             tag = el.tag.split('}')[1]
             if tag == 'seg' and words and el.get('type') == 'x-maqqef':
                 words[-1]['t'] += el.text
+                set_pron(words[-1], maqqef=True)
             elif tag == 'w' and el.get('type') == 'x-ketiv':
                 ketiv = ''.join(el.itertext()).replace('/', '')   # 기록된 글자. 읽는 형태(케레)를 본문에 쓴다
             elif tag == 'w':
@@ -180,8 +265,10 @@ def parse_hebrew(ch):
                     words.append(hebrew_word(w))
                 words[-1]['note'] = f'기록된 글자(케티브)는 {ketiv}이고, 본문에는 읽는 형태(케레)를 보여 줍니다.'
                 ketiv = None
-        if he_ch == 32:
-            words[0]['note'] = f'히브리어 성경에서는 32:{he_v}절입니다. 번역본과 절 번호가 다릅니다.'
+        if (v_ch, v_n) != (he_ch, he_v):
+            words[0]['note'] = f'히브리어 성경에서는 {he_ch}:{he_v}절입니다. 번역본과 절 번호가 다릅니다.'
+        for w in words:
+            w.pop('_ctx', None)
         verses[v_n] = words
     return verses
 
@@ -214,9 +301,9 @@ GR_FIX = json.loads((HERE / 'greek_lemma_fix.json').read_text(encoding='utf-8'))
 unmatched = {}
 
 
-def parse_greek(ch):
+def parse_greek(src, ch):
     verses = {}
-    for line in (RAW / 'Jn.txt').read_text(encoding='utf-8').splitlines():
+    for line in (RAW / src).read_text(encoding='utf-8').splitlines():
         ref, pos, code, punct, _word, _norm, lemma = line.split(' ')
         if int(ref[2:4]) != ch:
             continue
@@ -241,10 +328,12 @@ def side_text(name, book, ch):
 
 
 PARTS = [
-    {'file': 'gen-01-11', 'title': '창세기 1~11장', 'name': '창세기', 'book': 1, 'lang': 'he', 'chs': range(1, 12), 'parse': parse_hebrew},
-    {'file': 'gen-12-25', 'title': '창세기 12~25장', 'name': '창세기', 'book': 1, 'lang': 'he', 'chs': range(12, 26), 'parse': parse_hebrew},
-    {'file': 'gen-26-50', 'title': '창세기 26~50장', 'name': '창세기', 'book': 1, 'lang': 'he', 'chs': range(26, 51), 'parse': parse_hebrew},
-    {'file': 'jhn-01', 'title': '요한복음 1장', 'name': '요한복음', 'book': 43, 'lang': 'gr', 'chs': [1], 'parse': parse_greek},
+    {'file': 'gen-01-11', 'title': '창세기 1~11장', 'name': '창세기', 'book': 1, 'lang': 'he', 'chs': range(1, 12), 'parse': parse_hebrew, 'src': 'Gen.xml'},
+    {'file': 'gen-12-25', 'title': '창세기 12~25장', 'name': '창세기', 'book': 1, 'lang': 'he', 'chs': range(12, 26), 'parse': parse_hebrew, 'src': 'Gen.xml'},
+    {'file': 'gen-26-50', 'title': '창세기 26~50장', 'name': '창세기', 'book': 1, 'lang': 'he', 'chs': range(26, 51), 'parse': parse_hebrew, 'src': 'Gen.xml'},
+    {'file': 'exo-01-18', 'title': '출애굽기 1~18장', 'name': '출애굽기', 'book': 2, 'lang': 'he', 'chs': range(1, 19), 'parse': parse_hebrew, 'src': 'Exod.xml'},
+    {'file': 'exo-19-40', 'title': '출애굽기 19~40장', 'name': '출애굽기', 'book': 2, 'lang': 'he', 'chs': range(19, 41), 'parse': parse_hebrew, 'src': 'Exod.xml'},
+    {'file': 'jhn-01', 'title': '요한복음 1장', 'name': '요한복음', 'book': 43, 'lang': 'gr', 'chs': [1], 'parse': parse_greek, 'src': 'Jn.txt'},
 ]
 
 manifest = []
@@ -252,7 +341,7 @@ for part in PARTS:
     used.clear()
     chapters = []
     for ch in part['chs']:
-        words = part['parse'](ch)
+        words = part['parse'](part['src'], ch)
         ko, en = side_text('korean', part['book'], ch), side_text('kjv', part['book'], ch)
         assert set(ko) == set(en) == set(words), (part['name'], ch, len(ko), len(en), len(words))
         chapters.append({'id': f"{part['name']} {ch}장", 'lang': part['lang'],
