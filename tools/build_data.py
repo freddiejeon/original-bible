@@ -154,15 +154,16 @@ def hebrew_word(el):
 
 
 # 카메츠+슈와가 늘 카메츠 하투프(o)인 낱말: 첫 어근 글자의 카메츠를 o로 읽는다
-HATUF_SID = {'H6944', 'H2451', 'H5797', 'H2706', 'H3801', 'H4888', 'H7141', 'H7145', 'H2670', 'H6195', 'H70'}
+HATUF_SID = {'H6944', 'H2451', 'H5797', 'H2706', 'H3801', 'H4888', 'H4893', 'H7141', 'H7145', 'H2670', 'H6195', 'H70'}
 O_MARKS = {pron.HOLAM, pron.HOLAM_H, pron.QATAN, pron.HQAM, pron.QUBUTS}
 
 
-def lemma_has_o(sid, c):
-    """표제어에서 글자 c(앞 세 글자 안)가 o 모음을 가지는가: חֹק, עֹז, קִנָּמוֹן"""
+def lemma_has_o(sid, letters, j):
+    """표제어의 같은 자리 글자(j번째)가 o 모음을 가지는가: חֹק, עֹז, קִנָּמוֹן. דֹּדָתְךָ 의 둘째 ד 는 아니다"""
     lem = pron._he_letters(LEX_HE[sid].get('lemma') or '') if sid in LEX_HE else []
-    return any(y['c'] == c and (y['m'] & O_MARKS or j + 1 < len(lem) and lem[j + 1]['c'] == 'ו' and pron.HOLAM in lem[j + 1]['m'])
-               for j, y in enumerate(lem[:4]))
+    if j < 0 or j >= len(lem) or j >= len(letters) or lem[j]['c'] != letters[j]['c']:
+        return False
+    return bool(lem[j]['m'] & O_MARKS) or j + 1 < len(lem) and lem[j + 1]['c'] == 'ו' and pron.HOLAM in lem[j + 1]['m']
 
 
 def pron_hints(pieces, codes, sids, maqqef):
@@ -183,16 +184,16 @@ def pron_hints(pieces, codes, sids, maqqef):
                 force[start + j] = 'o'
                 if j + 1 < len(L) and L[j + 1]['c'] in 'אהחע' and pron.QAMETS in L[j + 1]['m']:
                     force[start + j + 1] = 'o'                                # תָעָבְדֵם (토오브뎀)
-            elif conj in 'pqrs' and first_qs is not None:                     # 분사·완료의 긴 카메츠: מְשָׁרְתוֹ (메샤레토)
+            elif (conj in 'pqrs' or stem == 'N') and first_qs is not None:    # 분사·완료·니팔의 긴 카메츠: מְשָׁרְתוֹ, הִמָּכְרוֹ
                 force[start + first_qs] = 'a'
             if conj in 'pqrs':
                 keep_long = True
         elif code[0] in 'NA' and sid:
             if sid in HATUF_SID and qs and qs[0] == 0:                        # קָדְשֶׁךָ, קָֽדָשִׁים (코다쉼)
                 force[start] = 'o'
-            elif first_qs is not None and lemma_has_o(sid, L[first_qs]['c']):
+            elif first_qs is not None and lemma_has_o(sid, L, first_qs):
                 force[start + first_qs] = 'o'                                 # 표제어가 o인 명사: אָבְנַיִם (오브나임)
-            if k == nseg - 1 and not lemma_has_o(sid, L[-2]['c'] if len(L) > 1 else ''):
+            if k == nseg - 1 and not lemma_has_o(sid, L, len(L) - 2):
                 keep_long = True                                              # הָעָם־ 은 그대로 (하암)
         if code[0] == 'R' and code[1:2] == 'd' and k + 1 < nseg:               # 전치사+관사 뒤 요드 슈와: בַּיְאֹר (바예오르)
             nl = pron._he_letters(pieces[k + 1])
@@ -237,6 +238,10 @@ def to_translation_ref(book, c, v):
         if c == 21 and v == 37:
             return 22, 1
         return (c, v + 4) if c == 8 else (c, v + 1) if c == 22 else (c, v)
+    if book == 'Lev':   # 히브리어 5:20~26이 번역본 6:1~7, 6장은 일곱 칸 밀린다
+        if c == 5 and v >= 20:
+            return 6, v - 19
+        return (c, v + 7) if c == 6 else (c, v)
     return c, v
 
 
@@ -333,6 +338,7 @@ PARTS = [
     {'file': 'gen-26-50', 'title': '창세기 26~50장', 'name': '창세기', 'book': 1, 'lang': 'he', 'chs': range(26, 51), 'parse': parse_hebrew, 'src': 'Gen.xml'},
     {'file': 'exo-01-18', 'title': '출애굽기 1~18장', 'name': '출애굽기', 'book': 2, 'lang': 'he', 'chs': range(1, 19), 'parse': parse_hebrew, 'src': 'Exod.xml'},
     {'file': 'exo-19-40', 'title': '출애굽기 19~40장', 'name': '출애굽기', 'book': 2, 'lang': 'he', 'chs': range(19, 41), 'parse': parse_hebrew, 'src': 'Exod.xml'},
+    {'file': 'lev-01-27', 'title': '레위기 1~27장', 'name': '레위기', 'book': 3, 'lang': 'he', 'chs': range(1, 28), 'parse': parse_hebrew, 'src': 'Lev.xml'},
     {'file': 'jhn-01', 'title': '요한복음 1장', 'name': '요한복음', 'book': 43, 'lang': 'gr', 'chs': [1], 'parse': parse_greek, 'src': 'Jn.txt'},
 ]
 
