@@ -179,7 +179,9 @@ def pron_hints(pieces, codes, sids, maqqef):
             stem, conj = code[1], code[2]
             if stem == 'q' and conj == 'c' and first_qs is not None:          # 칼 부정사 연계형: לְשָׁכְנִי (레쇼크니)
                 force[start + first_qs] = 'o'
-            elif stem == 'H' and qs and qs[0] == 0:                            # 호팔 접두 모음: מָשְׁזָר (모쉬자르)
+            elif stem == 'q' and conj == 'v' and first_qs is not None:        # 칼 명령형 + 접미사: הָרְגֵנִי (호르게니)
+                force[start + first_qs] = 'o'
+            elif stem in 'Hu' and qs and qs[0] == 0:                           # 호팔 접두 모음: מָשְׁזָר (모쉬자르)
                 j = qs[0]
                 force[start + j] = 'o'
                 if j + 1 < len(L) and L[j + 1]['c'] in 'אהחע' and pron.QAMETS in L[j + 1]['m']:
@@ -242,6 +244,13 @@ def to_translation_ref(book, c, v):
         if c == 5 and v >= 20:
             return 6, v - 19
         return (c, v + 7) if c == 6 else (c, v)
+    if book == 'Num':   # 히브리어 17:1~15가 번역본 16:36~50, 25:19는 26:1 앞부분, 30:1이 29:40이다
+        if c == 17:
+            return (16, v + 35) if v <= 15 else (17, v - 15)
+        if c == 25 and v == 19:
+            return 26, 1
+        if c == 30:
+            return (29, 40) if v == 1 else (30, v - 1)
     return c, v
 
 
@@ -274,7 +283,9 @@ def parse_hebrew(src, ch):
             words[0]['note'] = f'히브리어 성경에서는 {he_ch}:{he_v}절입니다. 번역본과 절 번호가 다릅니다.'
         for w in words:
             w.pop('_ctx', None)
-        verses[v_n] = words
+        if v_n in verses:   # 민수기 26:1은 히브리어 25:19와 26:1을 합친다
+            words[0]['note'] = f'여기부터 히브리어 성경 {he_ch}:{he_v}절입니다. 앞부분은 히브리어 성경에서 앞 절입니다.'
+        verses.setdefault(v_n, []).extend(words)
     return verses
 
 
@@ -339,6 +350,8 @@ PARTS = [
     {'file': 'exo-01-18', 'title': '출애굽기 1~18장', 'name': '출애굽기', 'book': 2, 'lang': 'he', 'chs': range(1, 19), 'parse': parse_hebrew, 'src': 'Exod.xml'},
     {'file': 'exo-19-40', 'title': '출애굽기 19~40장', 'name': '출애굽기', 'book': 2, 'lang': 'he', 'chs': range(19, 41), 'parse': parse_hebrew, 'src': 'Exod.xml'},
     {'file': 'lev-01-27', 'title': '레위기 1~27장', 'name': '레위기', 'book': 3, 'lang': 'he', 'chs': range(1, 28), 'parse': parse_hebrew, 'src': 'Lev.xml'},
+    {'file': 'num-01-19', 'title': '민수기 1~19장', 'name': '민수기', 'book': 4, 'lang': 'he', 'chs': range(1, 20), 'parse': parse_hebrew, 'src': 'Num.xml'},
+    {'file': 'num-20-36', 'title': '민수기 20~36장', 'name': '민수기', 'book': 4, 'lang': 'he', 'chs': range(20, 37), 'parse': parse_hebrew, 'src': 'Num.xml'},
     {'file': 'jhn-01', 'title': '요한복음 1장', 'name': '요한복음', 'book': 43, 'lang': 'gr', 'chs': [1], 'parse': parse_greek, 'src': 'Jn.txt'},
 ]
 

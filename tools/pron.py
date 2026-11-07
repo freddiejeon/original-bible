@@ -135,6 +135,12 @@ def hebrew(word, info=None, force=None):
                 x['silent'] = True
         elif c == 'ה' and i == n - 1 and not x['v'] and DAGESH not in m:
             x['silent'] = True
+        elif c == 'ה' and 0 < i < n - 1 and not m and L[i + 1]['c'] != 'ו':   # 합성 이름 가운데의 모음 문자: פְּדָהצוּר (페다추르)
+            x['silent'] = True
+        elif c == 'ו' and not m and i >= 2 and prev['c'] == 'א' and prev.get('silent') and HOLAM in L[i - 2]['m']:   # שְׂמֹאול (세몰)
+            x['silent'] = True
+        elif c == 'ש' and not m:                               # 점 없는 쉰은 읽지 않는다: יִשָּׂשכָר (이사카르)
+            x['silent'] = True
         elif c == 'א' and not x['v'] and SHEVA not in m:
             nx = L[i + 1] if i + 1 < n else None
             carries_vav = nx and nx['c'] == 'ו' and (HOLAM in nx['m'] or DAGESH in nx['m'])
@@ -147,7 +153,7 @@ def hebrew(word, info=None, force=None):
             x['v'] = 'o'
         # 원문에 표시되지 않은 카메츠 하투프: לְאָכְלָה (오클라), יָקְטָן (욕탄). 동사 אָכְלוּ (아켈루)는 제외
         nx, nx2 = (L[i + 1] if i + 1 < n else None), (L[i + 2] if i + 2 < n else None)
-        for root in ('אכל', 'יקט', 'יקש', 'ערל', 'אזנ', 'עני', 'גפר', 'אמנה', 'בשמ', 'בצרה', 'מתנ', 'שלחך', 'צפנת', 'נקב', 'נכר', 'אשר', 'בטנ', 'יחנ', 'קדק'):
+        for root in ('אכל', 'יקט', 'יקש', 'ערל', 'אזנ', 'עני', 'גפר', 'אמנה', 'בשמ', 'בצרה', 'מתנ', 'שלחך', 'צפנת', 'נקב', 'נכר', 'אשר', 'בטנ', 'יחנ', 'קדק', 'קדש'):
             if x['c'] == root[0] and QAMETS in x['m'] and nx and SHEVA in nx['m'] \
                     and ''.join(y['c'] for y in L[i:i + len(root)]) == root \
                     and not (root == 'אכל' and i + 3 < n and DAGESH in L[i + 3]['m']):
@@ -402,6 +408,9 @@ if __name__ == '__main__':
         (hebrew, 'וָאָרְדְּ', "va'ard", '바아르드'), (hebrew, 'יָחְנְךָ', 'yochnekha', '요흐네카'), (hebrew, 'הִתְמַהְמָהְנוּ', 'hitmahmahnu', '히트마흐마흐누'),
         (hebrew, 'לַשָּׁוְא', 'lashav', '라샤브'), (hebrew, 'מִלְמָעְלָה', 'milmala', '밀말라'), (hebrew, 'וְיָשְׁפֵה', 'veyashfe', '베야쉬페'),
         (hebrew, 'פָּנָיַ', 'panay', '파나이'), (hebrew, 'וְהַיְבוּסִי', 'vehayevusi', '베하예부시'),
+        (hebrew, 'קָדְשֵׁי', 'qodshe', '코드셰'),
+        (hebrew, 'יִשָּׂשכָר', 'yisakhar', '이사카르'), (hebrew, 'פְּדָהצוּר', 'pedatsur', '페다추르'),
+        (hebrew, 'יְהוּדָה', 'yehuda', '예후다'), (hebrew, 'וּשְׂמֹאול', 'usemol', '우세몰'), (hebrew, 'רֵעֵהוּ', "re'ehu", '레에후'),
         # 형태 분석 힌트(build_data.pron_hints): 칼 부정사, 호팔, 표제어 o, 막켑, 분사의 긴 카메츠, 전치사+관사 뒤 요드
         (lambda w: hebrew(w, force={1: 'o'}), 'לְשָׁכְנִי', 'leshokhni', '레쇼크니'),
         (lambda w: hebrew(w, force={0: 'o'}), 'מָשְׁזָר', 'moshzar', '모쉬자르'),
