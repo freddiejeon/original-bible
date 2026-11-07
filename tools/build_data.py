@@ -186,7 +186,7 @@ def pron_hints(pieces, codes, sids, maqqef):
                 force[start + j] = 'o'
                 if j + 1 < len(L) and L[j + 1]['c'] in 'אהחע' and pron.QAMETS in L[j + 1]['m']:
                     force[start + j + 1] = 'o'                                # תָעָבְדֵם (토오브뎀)
-            elif (conj in 'pqrs' or stem == 'N') and first_qs is not None:    # 분사·완료·니팔의 긴 카메츠: מְשָׁרְתוֹ, הִמָּכְרוֹ
+            elif (conj in 'pqrs' or stem in 'Npt') and first_qs is not None:  # 분사·완료·니팔·피엘·히트파엘의 긴 카메츠: מְשָׁרְתוֹ, הִמָּכְרוֹ, לְשָׁרְתוֹ
                 force[start + first_qs] = 'a'
             if conj in 'pqrs':
                 keep_long = True
@@ -251,6 +251,13 @@ def to_translation_ref(book, c, v):
             return 26, 1
         if c == 30:
             return (29, 40) if v == 1 else (30, v - 1)
+    if book == 'Deut':  # 히브리어 13:1이 번역본 12:32, 23:1이 22:30, 28:69가 29:1이다
+        if c in (13, 23):
+            return (c - 1, 32 if c == 13 else 30) if v == 1 else (c, v - 1)
+        if c == 28 and v == 69:
+            return 29, 1
+        if c == 29:
+            return 29, v + 1
     return c, v
 
 
@@ -352,6 +359,8 @@ PARTS = [
     {'file': 'lev-01-27', 'title': '레위기 1~27장', 'name': '레위기', 'book': 3, 'lang': 'he', 'chs': range(1, 28), 'parse': parse_hebrew, 'src': 'Lev.xml'},
     {'file': 'num-01-19', 'title': '민수기 1~19장', 'name': '민수기', 'book': 4, 'lang': 'he', 'chs': range(1, 20), 'parse': parse_hebrew, 'src': 'Num.xml'},
     {'file': 'num-20-36', 'title': '민수기 20~36장', 'name': '민수기', 'book': 4, 'lang': 'he', 'chs': range(20, 37), 'parse': parse_hebrew, 'src': 'Num.xml'},
+    {'file': 'deu-01-11', 'title': '신명기 1~11장', 'name': '신명기', 'book': 5, 'lang': 'he', 'chs': range(1, 12), 'parse': parse_hebrew, 'src': 'Deut.xml'},
+    {'file': 'deu-12-34', 'title': '신명기 12~34장', 'name': '신명기', 'book': 5, 'lang': 'he', 'chs': range(12, 35), 'parse': parse_hebrew, 'src': 'Deut.xml'},
     {'file': 'jhn-01', 'title': '요한복음 1장', 'name': '요한복음', 'book': 43, 'lang': 'gr', 'chs': [1], 'parse': parse_greek, 'src': 'Jn.txt'},
 ]
 

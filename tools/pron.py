@@ -120,6 +120,11 @@ def hebrew(word, info=None, force=None):
             x['init_u'] = True
         elif c == 'ו' and not m and prev and HIRIQ in prev['m'] and i == n - 2 and L[i + 1]['c'] == 'א':  # 모세오경의 הִוא (히)
             x['silent'] = True
+        elif c == 'ו' and not m and prev and QUBUTS in prev['m']:   # 키부츠 뒤 점 없는 와우는 모음 문자: לֻוחֹת (루호트, 신 10:1)
+            x['silent'] = True
+        elif c not in 'אהוי' and not x['v'] and SHEVA not in m and 0 < i < n - 1 and SHEVA in prev['m']:
+            m.add(SHEVA)                                           # 원문에 빠진 슈와: מִזְבּחֹתָם (미즈베호탐, 신 12:3)
+            x['vocal'] = True
         elif c == 'ו' and i and not prev_vowel and not (prev and prev.get('silent')):
             if DAGESH in m and not x['v'] and SHEVA not in m:      # 슈렉
                 prev['v2'] = 'u'
@@ -129,7 +134,7 @@ def hebrew(word, info=None, force=None):
                 x['silent'] = True
                 x['v'] = None
         elif c == 'י' and i and not x['v'] and SHEVA not in m and DAGESH not in m and prev:
-            if prev['m'] & {HIRIQ, TSERE, SEGOL}:                  # 모음 문자 요드
+            if prev['m'] & {HIRIQ, TSERE, SEGOL} and not (i + 1 < n and L[i + 1]['c'] == 'ו' and HOLAM in L[i + 1]['m']):   # 모음 문자 요드. שֵׂיוֹ (세요)는 자음
                 x['silent'] = True
             elif QAMETS in prev['m'] and i == n - 2 and L[i + 1]['c'] == 'ו' and not L[i + 1]['m'] & {DAGESH, HOLAM}:  # -ָיו = -av (הָיוֹ 는 하요)
                 x['silent'] = True
@@ -139,7 +144,7 @@ def hebrew(word, info=None, force=None):
             x['silent'] = True
         elif c == 'ו' and not m and i >= 2 and prev['c'] == 'א' and prev.get('silent') and HOLAM in L[i - 2]['m']:   # שְׂמֹאול (세몰)
             x['silent'] = True
-        elif c == 'ש' and not m:                               # 점 없는 쉰은 읽지 않는다: יִשָּׂשכָר (이사카르)
+        elif c == 'ש' and not m and i < n - 1:                 # 점 없는 쉰은 읽지 않는다: יִשָּׂשכָר (이사카르). 끝 글자는 읽는다: אִיש (이쉬, 신 24:16)
             x['silent'] = True
         elif c == 'א' and not x['v'] and SHEVA not in m:
             nx = L[i + 1] if i + 1 < n else None
@@ -407,7 +412,7 @@ if __name__ == '__main__':
         (hebrew, 'נָחְנוּ', 'nachnu', '나흐누'), (hebrew, 'וְיֵאָמְנוּ', "veye'amenu", '베예아메누'), (hebrew, 'בְּהֵאָבְקוֹ', "behe'aveqo", '베헤아베코'),
         (hebrew, 'וָאָרְדְּ', "va'ard", '바아르드'), (hebrew, 'יָחְנְךָ', 'yochnekha', '요흐네카'), (hebrew, 'הִתְמַהְמָהְנוּ', 'hitmahmahnu', '히트마흐마흐누'),
         (hebrew, 'לַשָּׁוְא', 'lashav', '라샤브'), (hebrew, 'מִלְמָעְלָה', 'milmala', '밀말라'), (hebrew, 'וְיָשְׁפֵה', 'veyashfe', '베야쉬페'),
-        (hebrew, 'פָּנָיַ', 'panay', '파나이'), (hebrew, 'וְהַיְבוּסִי', 'vehayevusi', '베하예부시'),
+        (hebrew, 'פָּנָיַ', 'panay', '파나이'), (hebrew, 'לֻוחֹת', 'luchot', '루호트'), (hebrew, 'מִזְבּחֹתָם', 'mizbechotam', '미즈베호탐'), (hebrew, 'שֵׂיוֹ', 'seyo', '세요'), (hebrew, 'אִיש', 'ish', '이쉬'), (hebrew, 'וְהַיְבוּסִי', 'vehayevusi', '베하예부시'),
         (hebrew, 'קָדְשֵׁי', 'qodshe', '코드셰'),
         (hebrew, 'יִשָּׂשכָר', 'yisakhar', '이사카르'), (hebrew, 'פְּדָהצוּר', 'pedatsur', '페다추르'),
         (hebrew, 'יְהוּדָה', 'yehuda', '예후다'), (hebrew, 'וּשְׂמֹאול', 'usemol', '우세몰'), (hebrew, 'רֵעֵהוּ', "re'ehu", '레에후'),
@@ -418,6 +423,7 @@ if __name__ == '__main__':
         (lambda w: hebrew(w, force={0: 'o'}), 'חָכְמָה', 'chokhma', '호크마'),
         (lambda w: hebrew(w, force={1: 'o'}), 'שְׁמָר', 'shemor', '셰모르'),
         (lambda w: hebrew(w, force={1: 'a'}), 'מְשָׁרְתוֹ', 'meshareto', '메샤레토'),
+        (lambda w: hebrew(w, force={1: 'a'}), 'לְשָׁרְתוֹ', 'leshareto', '레샤레토'),
         (lambda w: hebrew(w, force={1: 'e'}), 'בַּיְאֹר', "baye'or", '바예오르'),
     ]
     bad = 0
