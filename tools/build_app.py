@@ -33,7 +33,10 @@ shutil.copytree(ROOT / 'app' / 'icons', SITE / 'icons', dirs_exist_ok=True)
     HEAD + '<link rel="manifest" href="manifest.webmanifest"><meta name="theme-color" content="#14557b">'
     '<link rel="apple-touch-icon" href="icons/icon-192.png"><meta name="apple-mobile-web-app-capable" content="yes">'
     '</head><body>' + site_page +
-    "<script>if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js')</script></body></html>", encoding='utf-8')
+    # 새 버전이 설치되면 한 번 새로 고쳐 바로 보이게 한다. 처음 설치할 때는 새로 고치지 않는다
+    "<script>if('serviceWorker' in navigator){const had=!!navigator.serviceWorker.controller;"
+    "navigator.serviceWorker.addEventListener('controllerchange',()=>{if(had)location.reload()});"
+    "navigator.serviceWorker.register('sw.js')}</script></body></html>", encoding='utf-8')
 files = sorted(p.relative_to(SITE).as_posix() for p in SITE.rglob('*')
                if p.is_file() and p.name not in ('sw.js', '.nojekyll') and p.parts[len(SITE.parts)] != 'audio')
 version = hashlib.sha1(b''.join((SITE / f).read_bytes() for f in files)).hexdigest()[:10]

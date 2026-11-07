@@ -1,5 +1,5 @@
 // 앱 화면과 본문을 저장해 두고 오프라인에서도 연다. 값은 build_app.py가 채운다.
-const CACHE = 'ob-28d6eac4ca';
+const CACHE = 'ob-b230367c26';
 const FILES = ["./", "icons/icon-192.png", "icons/icon-512.png", "index.html", "manifest.webmanifest", "parts/exo-01-18.json", "parts/exo-19-40.json", "parts/gen-01-11.json", "parts/gen-12-25.json", "parts/gen-26-50.json", "parts/jhn-01.json"];
 const AUDIO = 'ob-audio-1';   // 음성은 들은 것부터 저장한다. 앱을 고쳐도 지우지 않는다
 

@@ -303,4 +303,4 @@ renderBar();
 document.documentElement.style.setProperty('--scale', state.scale);
 goTo(state.part, state.ch);
 </script>
-<script>if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js')</script></body></html>
+<script>if('serviceWorker' in navigator){const had=!!navigator.serviceWorker.controller;navigator.serviceWorker.addEventListener('controllerchange',()=>{if(had)location.reload()});navigator.serviceWorker.register('sw.js')}</script></body></html>
