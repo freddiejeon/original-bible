@@ -361,6 +361,7 @@ PARTS = [
     {'file': 'num-20-36', 'title': '민수기 20~36장', 'name': '민수기', 'book': 4, 'lang': 'he', 'chs': range(20, 37), 'parse': parse_hebrew, 'src': 'Num.xml'},
     {'file': 'deu-01-11', 'title': '신명기 1~11장', 'name': '신명기', 'book': 5, 'lang': 'he', 'chs': range(1, 12), 'parse': parse_hebrew, 'src': 'Deut.xml'},
     {'file': 'deu-12-34', 'title': '신명기 12~34장', 'name': '신명기', 'book': 5, 'lang': 'he', 'chs': range(12, 35), 'parse': parse_hebrew, 'src': 'Deut.xml'},
+    {'file': 'jos-01-24', 'title': '여호수아 1~24장', 'name': '여호수아', 'book': 6, 'lang': 'he', 'chs': range(1, 25), 'parse': parse_hebrew, 'src': 'Josh.xml'},
     {'file': 'jhn-01', 'title': '요한복음 1장', 'name': '요한복음', 'book': 43, 'lang': 'gr', 'chs': [1], 'parse': parse_greek, 'src': 'Jn.txt'},
 ]
 

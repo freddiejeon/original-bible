@@ -93,12 +93,18 @@ def _he_letters(word):
     return letters
 
 
+def _perpetual_qere(word):
+    """ירושלם 의 영구 케레: 라멧에 파타(카메츠)와 히렉이 함께 찍히면 요드를 넣어 읽는다 (예루샬라임)."""
+    return re.sub('ִ([֑-֯]*)([ַָ])', r'\2\1' + 'יִ', ud.normalize('NFD', word))
+
+
 def hebrew(word, info=None, force=None):
     """모음 부호가 붙은 히브리어 단어(접두사 구분 '/' 없이)를 토큰으로 바꾼다.
 
     force: {글자 번호: 'o' | 'a' | 'e'}. 형태 분석으로 정한 읽기(카메츠 하투프 o, 긴 카메츠 a, 소리 나는 슈와 e)를
     규칙보다 앞세운다. 번호는 자음 글자 기준(0부터)이다.
     """
+    word = _perpetual_qere(word)
     L = _he_letters(word)
     n = len(L)
     # 하나님의 이름은 기록된 자음대로 읽지 않고 전통 읽기를 적는다
@@ -292,7 +298,7 @@ def audio_name(word):
 
 def spoken(word, force=None):
     """음성 합성에 넘길 글자. 하나님의 이름은 전통 읽기로, 카메츠 하투프는 현대 음성이 오로 읽도록 홀렘으로 바꾼다."""
-    w = ud.normalize('NFD', clean(word))
+    w = _perpetual_qere(clean(word))
     L = _he_letters(w)
     if ''.join(x['c'] for x in L).endswith('יהוה'):
         pre = w[:w.index('י')]
@@ -377,7 +383,7 @@ if __name__ == '__main__':
     tests = [
         (hebrew, 'בְּרֵאשִׁית', 'bereshit', '베레쉬트'), (hebrew, 'בָּרָא', 'bara', '바라'),
         (hebrew, 'אֱלֹהִים', 'elohim', '엘로힘'), (hebrew, 'אֵת', 'et', '에트'),
-        (hebrew, 'הַשָּׁמַיִם', 'hashamayim', '하샤마임'), (hebrew, 'וְאֵת', "ve'et", '베에트'),
+        (hebrew, 'הַשָּׁמַיִם', 'hashamayim', '하샤마임'), (hebrew, 'יְרוּשָׁלִַם', 'yerushalayim', '예루샬라임'), (hebrew, 'בִּירוּשָׁלִַם', 'birushalayim', '비루샬라임'), (hebrew, 'וְאֵת', "ve'et", '베에트'),
         (hebrew, 'הָאָרֶץ', "ha'arets", '하아레츠'), (hebrew, 'וַיֹּאמֶר', 'vayomer', '바요메르'),
         (hebrew, 'יְהִי', 'yehi', '예히'), (hebrew, 'אוֹר', 'or', '오르'), (hebrew, 'וַיְהִי', 'vayehi', '바예히'),
         (hebrew, 'טוֹב', 'tov', '토브'), (hebrew, 'רָקִיעַ', 'raqia', '라키아'), (hebrew, 'יוֹם', 'yom', '욤'),
