@@ -111,13 +111,18 @@ def strip_marks(t):
     return ''.join(c for c in ud.normalize('NFD', t) if not ('֑' <= c <= '֯' or c in 'ֽֿ‍⁠'))
 
 
+# OSHB에서 형태 부호와 표제어 수가 맞지 않는 곳: 삿 8:24 מִכֶּם, 13:14 צִוִּיתִיהָ, 21:24 הַהִיא
+OSHB_FIX = {('HR/Sp2mp', 'm/4480 a'): ('HR/Sp2mp', '4480 a'), ('HVpp1cs/Pp3fs', '6680'): ('HVpp1cs/Sp3fs', '6680'),
+            ('HTd/Sp3fs', 'd/1931'): ('HTd/Pp3fs', 'd/1931')}
+
+
 def hebrew_word(el):
     text = ''.join(el.itertext())
     pieces = text.split('/')
-    morph = el.get('morph')
+    morph, lemma = OSHB_FIX.get((el.get('morph'), el.get('lemma')), (el.get('morph'), el.get('lemma')))
     assert morph[0] in 'HA', morph
     codes = morph[1:].split('/')
-    lemmas = [x.strip() for x in el.get('lemma').split('/')]
+    lemmas = [x.strip() for x in lemma.split('/')]
     segs, glosses, li = [], [], 0
     for i, code in enumerate(codes):
         if code == 'Sp3fs' and i < len(pieces) and strip_marks(pieces[i]).endswith('ךְ'):   # OSHB 오표기 (창 24:17, 24:23)
@@ -166,6 +171,10 @@ def lemma_has_o(sid, letters, j):
     return bool(lem[j]['m'] & O_MARKS) or j + 1 < len(lem) and lem[j + 1]['c'] == 'ו' and pron.HOLAM in lem[j + 1]['m']
 
 
+# 칼 미완료가 a 모음인 동사: 접미사가 붙어도 카메츠가 길다 (יִשְׁאָלְךָ 이쉬알레카, יִירָשְׁךָ 이라셰카, אִיעָצְךָ 이아체카)
+A_CLASS_SID = {'H7592', 'H3423', 'H3289'}
+
+
 def pron_hints(pieces, codes, sids, maqqef):
     """형태 분석으로 카메츠 하투프 등 규칙만으로 정하기 어려운 읽기를 글자 번호별로 정한다."""
     force, start, keep_long = {}, 0, False
@@ -181,6 +190,9 @@ def pron_hints(pieces, codes, sids, maqqef):
                 force[start + first_qs] = 'o'
             elif stem == 'q' and conj == 'v' and first_qs is not None:        # 칼 명령형 + 접미사: הָרְגֵנִי (호르게니)
                 force[start + first_qs] = 'o'
+            elif stem == 'q' and conj in 'iwhj' and first_qs is not None and k + 1 < len(codes) and codes[k + 1][0] == 'S' \
+                    and sid not in A_CLASS_SID:
+                force[start + first_qs] = 'o'                                 # 칼 미완료 + 접미사: נֶאֱסָרְךָ (네에소르카, 삿 15:13)
             elif stem in 'Hu' and qs and qs[0] == 0:                           # 호팔 접두 모음: מָשְׁזָר (모쉬자르)
                 j = qs[0]
                 force[start + j] = 'o'
@@ -362,6 +374,7 @@ PARTS = [
     {'file': 'deu-01-11', 'title': '신명기 1~11장', 'name': '신명기', 'book': 5, 'lang': 'he', 'chs': range(1, 12), 'parse': parse_hebrew, 'src': 'Deut.xml'},
     {'file': 'deu-12-34', 'title': '신명기 12~34장', 'name': '신명기', 'book': 5, 'lang': 'he', 'chs': range(12, 35), 'parse': parse_hebrew, 'src': 'Deut.xml'},
     {'file': 'jos-01-24', 'title': '여호수아 1~24장', 'name': '여호수아', 'book': 6, 'lang': 'he', 'chs': range(1, 25), 'parse': parse_hebrew, 'src': 'Josh.xml'},
+    {'file': 'jdg-01-21', 'title': '사사기 1~21장', 'name': '사사기', 'book': 7, 'lang': 'he', 'chs': range(1, 22), 'parse': parse_hebrew, 'src': 'Judg.xml'},
     {'file': 'jhn-01', 'title': '요한복음 1장', 'name': '요한복음', 'book': 43, 'lang': 'gr', 'chs': [1], 'parse': parse_greek, 'src': 'Jn.txt'},
 ]
 

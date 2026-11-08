@@ -131,6 +131,14 @@ def hebrew(word, info=None, force=None):
         elif c not in 'אהוי' and not x['v'] and SHEVA not in m and 0 < i < n - 1 and SHEVA in prev['m']:
             m.add(SHEVA)                                           # 원문에 빠진 슈와: מִזְבּחֹתָם (미즈베호탐, 신 12:3)
             x['vocal'] = True
+        elif c == 'ו' and HOLAM in m and DAGESH not in m and i >= 2 and prev['c'] == 'א' and not prev['m']                 and not L[i - 2]['silent'] and not any(v in L[i - 2]['m'] for v in VOWELS) and (SHEVA not in L[i - 2]['m'] or L[i - 2].get('vocal')):
+            L[i - 2]['m'].discard(SHEVA)                           # 모음 없는 자음 뒤 אוֹ: שְׂמאוֹלָם (세몰람, 삿 7:20), מְראוֹן (메론, 수 12:20)
+            L[i - 2]['vocal'] = False
+            L[i - 2]['v2'] = 'o'
+            prev['silent'] = x['silent'] = True
+            x['v'] = None
+        elif c == 'ו' and not m and i == n - 2 and prev and QAMETS in prev['m'] and L[i + 1]['c'] != 'ו':   # 특이 철자 וַיָּבָול (바야발, 삿 19:21)
+            x['silent'] = True
         elif c == 'ו' and i and not prev_vowel and not (prev and prev.get('silent')):
             if DAGESH in m and not x['v'] and SHEVA not in m:      # 슈렉
                 prev['v2'] = 'u'
@@ -140,7 +148,7 @@ def hebrew(word, info=None, force=None):
                 x['silent'] = True
                 x['v'] = None
         elif c == 'י' and i and not x['v'] and SHEVA not in m and DAGESH not in m and prev:
-            if prev['m'] & {HIRIQ, TSERE, SEGOL} and not (i + 1 < n and L[i + 1]['c'] == 'ו' and HOLAM in L[i + 1]['m']):   # 모음 문자 요드. שֵׂיוֹ (세요)는 자음
+            if (prev['m'] & {HIRIQ, TSERE, SEGOL} or i == n - 1 and prev['c'] == 'א' and not prev['m'] and HIRIQ in L[i - 2]['m']) and not (i + 1 < n and L[i + 1]['c'] == 'ו' and HOLAM in L[i + 1]['m']):   # 모음 문자 요드. שֵׂיוֹ (세요)는 자음
                 x['silent'] = True
             elif QAMETS in prev['m'] and i == n - 2 and L[i + 1]['c'] == 'ו' and not L[i + 1]['m'] & {DAGESH, HOLAM}:  # -ָיו = -av (הָיוֹ 는 하요)
                 x['silent'] = True
@@ -202,8 +210,11 @@ def hebrew(word, info=None, force=None):
     cons = ''.join(x['c'] for x in L)
     # 휴지형 카메츠 뒤라도 닫힌 음절: מִלְמָעְלָה (밀마알라), וְיָשְׁפֵה (베야쉬페)
     for i, x in enumerate(L):
-        if SHEVA in x['m'] and i and QAMETS in L[i - 1]['m'] and cons[i - 1:i + 3] in ('מעלה', 'ישפה'):
+        if SHEVA in x['m'] and i and QAMETS in L[i - 1]['m'] and cons[i - 1:i + 3] in ('מעלה', 'ישפה', 'יהצה'):
             x['closed'] = True
+    # 3인칭 여성 단수 완료 + 접미사의 슈와는 묵음: הֲרָגָתְהוּ (하라가트후, 삿 9:54)
+    if n >= 4 and cons.endswith('תהו') and SHEVA in L[n - 3]['m'] and QAMETS in L[n - 4]['m']:
+        L[n - 3]['closed'] = True
     # 두 강세 형태 פָּנָֽיַ: 끝 요드의 파타는 읽지 않는다 (파나이)
     if n >= 3 and cons[-1] == 'י' and PATAH in L[-1]['m'] and QAMETS in L[-2]['m']:
         L[-1]['v'] = None
@@ -383,7 +394,9 @@ if __name__ == '__main__':
     tests = [
         (hebrew, 'בְּרֵאשִׁית', 'bereshit', '베레쉬트'), (hebrew, 'בָּרָא', 'bara', '바라'),
         (hebrew, 'אֱלֹהִים', 'elohim', '엘로힘'), (hebrew, 'אֵת', 'et', '에트'),
-        (hebrew, 'הַשָּׁמַיִם', 'hashamayim', '하샤마임'), (hebrew, 'יְרוּשָׁלִַם', 'yerushalayim', '예루샬라임'), (hebrew, 'בִּירוּשָׁלִַם', 'birushalayim', '비루샬라임'), (hebrew, 'וְאֵת', "ve'et", '베에트'),
+        (hebrew, 'הַשָּׁמַיִם', 'hashamayim', '하샤마임'), (hebrew, 'יְרוּשָׁלִַם', 'yerushalayim', '예루샬라임'), (hebrew, 'בִּירוּשָׁלִַם', 'birushalayim', '비루샬라임'),
+        (hebrew, 'שְׂמאוֹלָם', 'semolam', '세몰람'), (hebrew, 'פֶלִאי', 'feli', '펠리'), (hebrew, 'הֲרָגָתְהוּ', 'haragathu', '하라가트후'),
+        (hebrew, 'בְּיָהְצָה', 'beyahtsa', '베야흐차'), (hebrew, 'טָווּ', 'tavu', '타부'), (hebrew, 'הוֹצִיאוֹ', "hotsi'o", '호치오'), (hebrew, 'בְּרִיאוֹת', "beri'ot", '베리오트'), (hebrew, 'וְאֵת', "ve'et", '베에트'),
         (hebrew, 'הָאָרֶץ', "ha'arets", '하아레츠'), (hebrew, 'וַיֹּאמֶר', 'vayomer', '바요메르'),
         (hebrew, 'יְהִי', 'yehi', '예히'), (hebrew, 'אוֹר', 'or', '오르'), (hebrew, 'וַיְהִי', 'vayehi', '바예히'),
         (hebrew, 'טוֹב', 'tov', '토브'), (hebrew, 'רָקִיעַ', 'raqia', '라키아'), (hebrew, 'יוֹם', 'yom', '욤'),
