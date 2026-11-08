@@ -159,7 +159,7 @@ def hebrew_word(el):
 
 
 # 카메츠+슈와가 늘 카메츠 하투프(o)인 낱말: 첫 어근 글자의 카메츠를 o로 읽는다
-HATUF_SID = {'H6944', 'H2451', 'H5797', 'H2706', 'H3801', 'H4888', 'H4893', 'H7141', 'H7145', 'H2670', 'H6195', 'H70'}
+HATUF_SID = {'H6944', 'H2451', 'H5797', 'H2706', 'H3801', 'H4888', 'H4893', 'H7141', 'H7145', 'H2670', 'H6195', 'H70', 'H551'}
 O_MARKS = {pron.HOLAM, pron.HOLAM_H, pron.QATAN, pron.HQAM, pron.QUBUTS}
 
 
@@ -209,6 +209,8 @@ def pron_hints(pieces, codes, sids, maqqef):
                 force[start + first_qs] = 'o'                                 # 표제어가 o인 명사: אָבְנַיִם (오브나임)
             if k == nseg - 1 and not lemma_has_o(sid, L, len(L) - 2):
                 keep_long = True                                              # הָעָם־ 은 그대로 (하암)
+        elif code[0] == 'D' and sid in HATUF_SID and qs and qs[0] == 0:      # 부사: אָמְנָם (옴남)
+            force[start] = 'o'
         if code[0] == 'R' and code[1:2] == 'd' and k + 1 < nseg:               # 전치사+관사 뒤 요드 슈와: בַּיְאֹר (바예오르)
             nl = pron._he_letters(pieces[k + 1])
             if nl and nl[0]['c'] == 'י' and pron.SHEVA in nl[0]['m']:
@@ -375,6 +377,7 @@ PARTS = [
     {'file': 'deu-12-34', 'title': '신명기 12~34장', 'name': '신명기', 'book': 5, 'lang': 'he', 'chs': range(12, 35), 'parse': parse_hebrew, 'src': 'Deut.xml'},
     {'file': 'jos-01-24', 'title': '여호수아 1~24장', 'name': '여호수아', 'book': 6, 'lang': 'he', 'chs': range(1, 25), 'parse': parse_hebrew, 'src': 'Josh.xml'},
     {'file': 'jdg-01-21', 'title': '사사기 1~21장', 'name': '사사기', 'book': 7, 'lang': 'he', 'chs': range(1, 22), 'parse': parse_hebrew, 'src': 'Judg.xml'},
+    {'file': 'rut-01-04', 'title': '룻기 1~4장', 'name': '룻기', 'book': 8, 'lang': 'he', 'chs': range(1, 5), 'parse': parse_hebrew, 'src': 'Ruth.xml'},
     {'file': 'jhn-01', 'title': '요한복음 1장', 'name': '요한복음', 'book': 43, 'lang': 'gr', 'chs': [1], 'parse': parse_greek, 'src': 'Jn.txt'},
 ]
 
