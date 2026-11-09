@@ -159,7 +159,7 @@ def hebrew_word(el):
 
 
 # 카메츠+슈와가 늘 카메츠 하투프(o)인 낱말: 첫 어근 글자의 카메츠를 o로 읽는다
-HATUF_SID = {'H6944', 'H2451', 'H5797', 'H2706', 'H3801', 'H4888', 'H4893', 'H7141', 'H7145', 'H2670', 'H6195', 'H70', 'H551', 'H8483'}
+HATUF_SID = {'H6944', 'H2451', 'H5797', 'H2706', 'H3801', 'H4888', 'H4893', 'H7141', 'H7145', 'H2670', 'H6195', 'H70', 'H551', 'H8483', 'H6995'}
 O_MARKS = {pron.HOLAM, pron.HOLAM_H, pron.QATAN, pron.HQAM, pron.QUBUTS}
 
 
@@ -193,7 +193,7 @@ def pron_hints(pieces, codes, sids, maqqef):
             elif stem == 'q' and conj in 'iwhj' and first_qs is not None and k + 1 < len(codes) and codes[k + 1][0] == 'S' \
                     and sid not in A_CLASS_SID:
                 force[start + first_qs] = 'o'                                 # 칼 미완료 + 접미사: נֶאֱסָרְךָ (네에소르카, 삿 15:13)
-            elif stem in 'Hu' and qs and qs[0] == 0:                           # 호팔 접두 모음: מָשְׁזָר (모쉬자르)
+            elif stem in 'HuL' and qs and qs[0] == 0:                          # 호팔 접두 모음: מָשְׁזָר (모쉬자르), 폴팔: כָּלְכְּלוּ (콜켈루, 왕상 20:27)
                 j = qs[0]
                 force[start + j] = 'o'
                 if j + 1 < len(L) and L[j + 1]['c'] in 'אהחע' and pron.QAMETS in L[j + 1]['m']:
@@ -205,6 +205,8 @@ def pron_hints(pieces, codes, sids, maqqef):
         elif code[0] in 'NA' and sid:
             if sid in HATUF_SID and qs and qs[0] == 0:                        # קָדְשֶׁךָ, קָֽדָשִׁים (코다쉼)
                 force[start] = 'o'
+                if len(L) > 2 and 1 in qs and pron.DAGESH in L[2]['m']:       # 겹자음 앞 닫힌 음절도 o: קָטָנִּי (코토니, 왕상 12:10)
+                    force[start + 1] = 'o'
             elif first_qs is not None and lemma_has_o(sid, L, first_qs):
                 force[start + first_qs] = 'o'                                 # 표제어가 o인 명사: אָבְנַיִם (오브나임)
             if k == nseg - 1 and not lemma_has_o(sid, L, len(L) - 2):
@@ -277,6 +279,11 @@ def to_translation_ref(book, c, v):
             return (c - 1, 42 if c == 21 else 29) if v == 1 else (c, v - 1)
     if book == '2Sam' and c == 19:  # 히브리어 19:1이 번역본 18:33이다
         return (18, 33) if v == 1 else (19, v - 1)
+    if book == '1Kgs':  # 히브리어 5:1~14가 번역본 4:21~34, 22:44는 22:43 뒷부분이다
+        if c == 5:
+            return (4, v + 20) if v <= 14 else (5, v - 14)
+        if c == 22 and v >= 44:
+            return 22, v - 1
     return c, v
 
 
@@ -387,6 +394,8 @@ PARTS = [
     {'file': '1sa-16-31', 'title': '사무엘상 16~31장', 'name': '사무엘상', 'book': 9, 'lang': 'he', 'chs': range(16, 32), 'parse': parse_hebrew, 'src': '1Sam.xml'},
     {'file': '2sa-01-12', 'title': '사무엘하 1~12장', 'name': '사무엘하', 'book': 10, 'lang': 'he', 'chs': range(1, 13), 'parse': parse_hebrew, 'src': '2Sam.xml'},
     {'file': '2sa-13-24', 'title': '사무엘하 13~24장', 'name': '사무엘하', 'book': 10, 'lang': 'he', 'chs': range(13, 25), 'parse': parse_hebrew, 'src': '2Sam.xml'},
+    {'file': '1ki-01-11', 'title': '열왕기상 1~11장', 'name': '열왕기상', 'book': 11, 'lang': 'he', 'chs': range(1, 12), 'parse': parse_hebrew, 'src': '1Kgs.xml'},
+    {'file': '1ki-12-22', 'title': '열왕기상 12~22장', 'name': '열왕기상', 'book': 11, 'lang': 'he', 'chs': range(12, 23), 'parse': parse_hebrew, 'src': '1Kgs.xml'},
     {'file': 'jhn-01', 'title': '요한복음 1장', 'name': '요한복음', 'book': 43, 'lang': 'gr', 'chs': [1], 'parse': parse_greek, 'src': 'Jn.txt'},
 ]
 

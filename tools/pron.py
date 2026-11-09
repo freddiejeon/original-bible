@@ -94,8 +94,10 @@ def _he_letters(word):
 
 
 def _perpetual_qere(word):
-    """ירושלם 의 영구 케레: 라멧에 파타(카메츠)와 히렉이 함께 찍히면 요드를 넣어 읽는다 (예루샬라임)."""
-    return re.sub('ִ([֑-֯]*)([ַָ])', r'\2\1' + 'יִ', ud.normalize('NFD', word))
+    """ירושלם 의 영구 케레: 라멧에 파타(카메츠)와 히렉이 함께 찍히면 요드를 넣어 읽는다 (예루샬라임).
+    방향의 헤가 붙어 슈와와 파타가 함께 찍히면 요드에 슈와를 둔다: יְרוּשָׁלְַמָה (예루샬라이마, 왕상 10:2)."""
+    w = re.sub('ִ([֑-֯]*)([ַָ])', r'\2\1' + 'יִ', ud.normalize('NFD', word))
+    return re.sub('ְ([֑-֯]*)([ַָ])', r'\2\1' + 'יְ', w)
 
 
 def hebrew(word, info=None, force=None):
@@ -394,7 +396,7 @@ if __name__ == '__main__':
     tests = [
         (hebrew, 'בְּרֵאשִׁית', 'bereshit', '베레쉬트'), (hebrew, 'בָּרָא', 'bara', '바라'),
         (hebrew, 'אֱלֹהִים', 'elohim', '엘로힘'), (hebrew, 'אֵת', 'et', '에트'),
-        (hebrew, 'הַשָּׁמַיִם', 'hashamayim', '하샤마임'), (hebrew, 'יְרוּשָׁלִַם', 'yerushalayim', '예루샬라임'), (hebrew, 'בִּירוּשָׁלִַם', 'birushalayim', '비루샬라임'),
+        (hebrew, 'הַשָּׁמַיִם', 'hashamayim', '하샤마임'), (hebrew, 'יְרוּשָׁלִַם', 'yerushalayim', '예루샬라임'), (hebrew, 'בִּירוּשָׁלִַם', 'birushalayim', '비루샬라임'), (hebrew, 'יְרוּשָׁלְַמָה', 'yerushalayma', '예루샬라이마'),
         (hebrew, 'שְׂמאוֹלָם', 'semolam', '세몰람'), (hebrew, 'פֶלִאי', 'feli', '펠리'), (hebrew, 'חֹטִאים', 'chotim', '호팀'), (hebrew, 'הֲרָגָתְהוּ', 'haragathu', '하라가트후'),
         (hebrew, 'בְּיָהְצָה', 'beyahtsa', '베야흐차'), (hebrew, 'טָווּ', 'tavu', '타부'), (hebrew, 'הוֹצִיאוֹ', "hotsi'o", '호치오'), (hebrew, 'בְּרִיאוֹת', "beri'ot", '베리오트'), (hebrew, 'וְאֵת', "ve'et", '베에트'),
         (hebrew, 'הָאָרֶץ', "ha'arets", '하아레츠'), (hebrew, 'וַיֹּאמֶר', 'vayomer', '바요메르'),
