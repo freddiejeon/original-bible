@@ -159,7 +159,7 @@ def hebrew_word(el):
 
 
 # 카메츠+슈와가 늘 카메츠 하투프(o)인 낱말: 첫 어근 글자의 카메츠를 o로 읽는다
-HATUF_SID = {'H6944', 'H2451', 'H5797', 'H2706', 'H3801', 'H4888', 'H4893', 'H7141', 'H7145', 'H2670', 'H6195', 'H70', 'H551'}
+HATUF_SID = {'H6944', 'H2451', 'H5797', 'H2706', 'H3801', 'H4888', 'H4893', 'H7141', 'H7145', 'H2670', 'H6195', 'H70', 'H551', 'H8483'}
 O_MARKS = {pron.HOLAM, pron.HOLAM_H, pron.QATAN, pron.HQAM, pron.QUBUTS}
 
 
@@ -275,6 +275,8 @@ def to_translation_ref(book, c, v):
     if book == '1Sam':  # 히브리어 21:1은 번역본 20:42 뒷부분, 24:1이 23:29이다
         if c in (21, 24):
             return (c - 1, 42 if c == 21 else 29) if v == 1 else (c, v - 1)
+    if book == '2Sam' and c == 19:  # 히브리어 19:1이 번역본 18:33이다
+        return (18, 33) if v == 1 else (19, v - 1)
     return c, v
 
 
@@ -383,6 +385,8 @@ PARTS = [
     {'file': 'rut-01-04', 'title': '룻기 1~4장', 'name': '룻기', 'book': 8, 'lang': 'he', 'chs': range(1, 5), 'parse': parse_hebrew, 'src': 'Ruth.xml'},
     {'file': '1sa-01-15', 'title': '사무엘상 1~15장', 'name': '사무엘상', 'book': 9, 'lang': 'he', 'chs': range(1, 16), 'parse': parse_hebrew, 'src': '1Sam.xml'},
     {'file': '1sa-16-31', 'title': '사무엘상 16~31장', 'name': '사무엘상', 'book': 9, 'lang': 'he', 'chs': range(16, 32), 'parse': parse_hebrew, 'src': '1Sam.xml'},
+    {'file': '2sa-01-12', 'title': '사무엘하 1~12장', 'name': '사무엘하', 'book': 10, 'lang': 'he', 'chs': range(1, 13), 'parse': parse_hebrew, 'src': '2Sam.xml'},
+    {'file': '2sa-13-24', 'title': '사무엘하 13~24장', 'name': '사무엘하', 'book': 10, 'lang': 'he', 'chs': range(13, 25), 'parse': parse_hebrew, 'src': '2Sam.xml'},
     {'file': 'jhn-01', 'title': '요한복음 1장', 'name': '요한복음', 'book': 43, 'lang': 'gr', 'chs': [1], 'parse': parse_greek, 'src': 'Jn.txt'},
 ]
 
