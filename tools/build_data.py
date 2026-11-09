@@ -172,7 +172,7 @@ def lemma_has_o(sid, letters, j):
 
 
 # 칼 미완료가 a 모음인 동사: 접미사가 붙어도 카메츠가 길다 (יִשְׁאָלְךָ 이쉬알레카, יִירָשְׁךָ 이라셰카, אִיעָצְךָ 이아체카)
-A_CLASS_SID = {'H7592', 'H3423', 'H3289'}
+A_CLASS_SID = {'H7592', 'H3423', 'H3289', 'H3988'}
 
 
 def pron_hints(pieces, codes, sids, maqqef):
@@ -272,6 +272,9 @@ def to_translation_ref(book, c, v):
             return 29, 1
         if c == 29:
             return 29, v + 1
+    if book == '1Sam':  # 히브리어 21:1은 번역본 20:42 뒷부분, 24:1이 23:29이다
+        if c in (21, 24):
+            return (c - 1, 42 if c == 21 else 29) if v == 1 else (c, v - 1)
     return c, v
 
 
@@ -378,6 +381,8 @@ PARTS = [
     {'file': 'jos-01-24', 'title': '여호수아 1~24장', 'name': '여호수아', 'book': 6, 'lang': 'he', 'chs': range(1, 25), 'parse': parse_hebrew, 'src': 'Josh.xml'},
     {'file': 'jdg-01-21', 'title': '사사기 1~21장', 'name': '사사기', 'book': 7, 'lang': 'he', 'chs': range(1, 22), 'parse': parse_hebrew, 'src': 'Judg.xml'},
     {'file': 'rut-01-04', 'title': '룻기 1~4장', 'name': '룻기', 'book': 8, 'lang': 'he', 'chs': range(1, 5), 'parse': parse_hebrew, 'src': 'Ruth.xml'},
+    {'file': '1sa-01-15', 'title': '사무엘상 1~15장', 'name': '사무엘상', 'book': 9, 'lang': 'he', 'chs': range(1, 16), 'parse': parse_hebrew, 'src': '1Sam.xml'},
+    {'file': '1sa-16-31', 'title': '사무엘상 16~31장', 'name': '사무엘상', 'book': 9, 'lang': 'he', 'chs': range(16, 32), 'parse': parse_hebrew, 'src': '1Sam.xml'},
     {'file': 'jhn-01', 'title': '요한복음 1장', 'name': '요한복음', 'book': 43, 'lang': 'gr', 'chs': [1], 'parse': parse_greek, 'src': 'Jn.txt'},
 ]
 

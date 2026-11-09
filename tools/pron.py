@@ -148,7 +148,7 @@ def hebrew(word, info=None, force=None):
                 x['silent'] = True
                 x['v'] = None
         elif c == 'י' and i and not x['v'] and SHEVA not in m and DAGESH not in m and prev:
-            if (prev['m'] & {HIRIQ, TSERE, SEGOL} or i == n - 1 and prev['c'] == 'א' and not prev['m'] and HIRIQ in L[i - 2]['m']) and not (i + 1 < n and L[i + 1]['c'] == 'ו' and HOLAM in L[i + 1]['m']):   # 모음 문자 요드. שֵׂיוֹ (세요)는 자음
+            if (prev['m'] & {HIRIQ, TSERE, SEGOL} or prev['c'] == 'א' and not prev['m'] and HIRIQ in L[i - 2]['m']) and not (i + 1 < n and L[i + 1]['c'] == 'ו' and HOLAM in L[i + 1]['m']):   # 모음 문자 요드. שֵׂיוֹ (세요)는 자음
                 x['silent'] = True
             elif QAMETS in prev['m'] and i == n - 2 and L[i + 1]['c'] == 'ו' and not L[i + 1]['m'] & {DAGESH, HOLAM}:  # -ָיו = -av (הָיוֹ 는 하요)
                 x['silent'] = True
@@ -395,7 +395,7 @@ if __name__ == '__main__':
         (hebrew, 'בְּרֵאשִׁית', 'bereshit', '베레쉬트'), (hebrew, 'בָּרָא', 'bara', '바라'),
         (hebrew, 'אֱלֹהִים', 'elohim', '엘로힘'), (hebrew, 'אֵת', 'et', '에트'),
         (hebrew, 'הַשָּׁמַיִם', 'hashamayim', '하샤마임'), (hebrew, 'יְרוּשָׁלִַם', 'yerushalayim', '예루샬라임'), (hebrew, 'בִּירוּשָׁלִַם', 'birushalayim', '비루샬라임'),
-        (hebrew, 'שְׂמאוֹלָם', 'semolam', '세몰람'), (hebrew, 'פֶלִאי', 'feli', '펠리'), (hebrew, 'הֲרָגָתְהוּ', 'haragathu', '하라가트후'),
+        (hebrew, 'שְׂמאוֹלָם', 'semolam', '세몰람'), (hebrew, 'פֶלִאי', 'feli', '펠리'), (hebrew, 'חֹטִאים', 'chotim', '호팀'), (hebrew, 'הֲרָגָתְהוּ', 'haragathu', '하라가트후'),
         (hebrew, 'בְּיָהְצָה', 'beyahtsa', '베야흐차'), (hebrew, 'טָווּ', 'tavu', '타부'), (hebrew, 'הוֹצִיאוֹ', "hotsi'o", '호치오'), (hebrew, 'בְּרִיאוֹת', "beri'ot", '베리오트'), (hebrew, 'וְאֵת', "ve'et", '베에트'),
         (hebrew, 'הָאָרֶץ', "ha'arets", '하아레츠'), (hebrew, 'וַיֹּאמֶר', 'vayomer', '바요메르'),
         (hebrew, 'יְהִי', 'yehi', '예히'), (hebrew, 'אוֹר', 'or', '오르'), (hebrew, 'וַיְהִי', 'vayehi', '바예히'),
