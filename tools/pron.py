@@ -130,6 +130,12 @@ def hebrew(word, info=None, force=None):
             x['silent'] = True
         elif c == 'ו' and not m and prev and QUBUTS in prev['m']:   # 키부츠 뒤 점 없는 와우는 모음 문자: לֻוחֹת (루호트, 신 10:1)
             x['silent'] = True
+        elif c == 'ו' and not m and i >= 2 and prev['c'] == 'א' and not prev['m'] and QUBUTS in L[i - 2]['m']:
+            x['silent'] = prev['silent'] = True                  # 키부츠 뒤 묵음 알레프와 점 없는 와우: הָרֻאובֵנִי (하루베니, 왕하 10:33)
+        elif c == 'י' and SHEVA in m and prev and HIRIQ in prev['m'] and i + 1 < n and SHEVA in L[i + 1]['m']:
+            m.discard(SHEVA)                                       # 히렉 뒤 슈와 붙은 요드는 모음 문자: בִיְזְרְעֶאל (비즈레엘, 왕하 9:15)
+            x['silent'] = True
+            L[i + 1]['closed'] = True
         elif c not in 'אהוי' and not x['v'] and SHEVA not in m and 0 < i < n - 1 and SHEVA in prev['m']:
             m.add(SHEVA)                                           # 원문에 빠진 슈와: מִזְבּחֹתָם (미즈베호탐, 신 12:3)
             x['vocal'] = True
@@ -396,7 +402,7 @@ if __name__ == '__main__':
     tests = [
         (hebrew, 'בְּרֵאשִׁית', 'bereshit', '베레쉬트'), (hebrew, 'בָּרָא', 'bara', '바라'),
         (hebrew, 'אֱלֹהִים', 'elohim', '엘로힘'), (hebrew, 'אֵת', 'et', '에트'),
-        (hebrew, 'הַשָּׁמַיִם', 'hashamayim', '하샤마임'), (hebrew, 'יְרוּשָׁלִַם', 'yerushalayim', '예루샬라임'), (hebrew, 'בִּירוּשָׁלִַם', 'birushalayim', '비루샬라임'), (hebrew, 'יְרוּשָׁלְַמָה', 'yerushalayma', '예루샬라이마'),
+        (hebrew, 'הַשָּׁמַיִם', 'hashamayim', '하샤마임'), (hebrew, 'יְרוּשָׁלִַם', 'yerushalayim', '예루샬라임'), (hebrew, 'בִּירוּשָׁלִַם', 'birushalayim', '비루샬라임'), (hebrew, 'יְרוּשָׁלְַמָה', 'yerushalayma', '예루샬라이마'), (hebrew, 'בִיְזְרְעֶאל', "vizre'el", '비즈레엘'), (hebrew, 'וְהָרֻאובֵנִי', 'veharuveni', '베하루베니'),
         (hebrew, 'שְׂמאוֹלָם', 'semolam', '세몰람'), (hebrew, 'פֶלִאי', 'feli', '펠리'), (hebrew, 'חֹטִאים', 'chotim', '호팀'), (hebrew, 'הֲרָגָתְהוּ', 'haragathu', '하라가트후'),
         (hebrew, 'בְּיָהְצָה', 'beyahtsa', '베야흐차'), (hebrew, 'טָווּ', 'tavu', '타부'), (hebrew, 'הוֹצִיאוֹ', "hotsi'o", '호치오'), (hebrew, 'בְּרִיאוֹת', "beri'ot", '베리오트'), (hebrew, 'וְאֵת', "ve'et", '베에트'),
         (hebrew, 'הָאָרֶץ', "ha'arets", '하아레츠'), (hebrew, 'וַיֹּאמֶר', 'vayomer', '바요메르'),

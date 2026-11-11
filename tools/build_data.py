@@ -116,8 +116,13 @@ OSHB_FIX = {('HR/Sp2mp', 'm/4480 a'): ('HR/Sp2mp', '4480 a'), ('HVpp1cs/Pp3fs', 
             ('HTd/Sp3fs', 'd/1931'): ('HTd/Pp3fs', 'd/1931')}
 
 
+# OSHB 케레에 모음이 빠진 곳: 왕하 18:27 מימֵי (케레 메메)
+TEXT_FIX = {'מימֵ֥י': 'מֵ֥ימֵי'}
+
+
 def hebrew_word(el):
     text = ''.join(el.itertext())
+    text = TEXT_FIX.get(text, text)
     pieces = text.split('/')
     morph, lemma = OSHB_FIX.get((el.get('morph'), el.get('lemma')), (el.get('morph'), el.get('lemma')))
     assert morph[0] in 'HA', morph
@@ -284,6 +289,8 @@ def to_translation_ref(book, c, v):
             return (4, v + 20) if v <= 14 else (5, v - 14)
         if c == 22 and v >= 44:
             return 22, v - 1
+    if book == '2Kgs' and c == 12:  # 히브리어 12:1이 번역본 11:21이다
+        return (11, 21) if v == 1 else (12, v - 1)
     return c, v
 
 
@@ -396,6 +403,8 @@ PARTS = [
     {'file': '2sa-13-24', 'title': '사무엘하 13~24장', 'name': '사무엘하', 'book': 10, 'lang': 'he', 'chs': range(13, 25), 'parse': parse_hebrew, 'src': '2Sam.xml'},
     {'file': '1ki-01-11', 'title': '열왕기상 1~11장', 'name': '열왕기상', 'book': 11, 'lang': 'he', 'chs': range(1, 12), 'parse': parse_hebrew, 'src': '1Kgs.xml'},
     {'file': '1ki-12-22', 'title': '열왕기상 12~22장', 'name': '열왕기상', 'book': 11, 'lang': 'he', 'chs': range(12, 23), 'parse': parse_hebrew, 'src': '1Kgs.xml'},
+    {'file': '2ki-01-13', 'title': '열왕기하 1~13장', 'name': '열왕기하', 'book': 12, 'lang': 'he', 'chs': range(1, 14), 'parse': parse_hebrew, 'src': '2Kgs.xml'},
+    {'file': '2ki-14-25', 'title': '열왕기하 14~25장', 'name': '열왕기하', 'book': 12, 'lang': 'he', 'chs': range(14, 26), 'parse': parse_hebrew, 'src': '2Kgs.xml'},
     {'file': 'jhn-01', 'title': '요한복음 1장', 'name': '요한복음', 'book': 43, 'lang': 'gr', 'chs': [1], 'parse': parse_greek, 'src': 'Jn.txt'},
 ]
 
