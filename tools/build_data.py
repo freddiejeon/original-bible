@@ -116,8 +116,8 @@ OSHB_FIX = {('HR/Sp2mp', 'm/4480 a'): ('HR/Sp2mp', '4480 a'), ('HVpp1cs/Pp3fs', 
             ('HTd/Sp3fs', 'd/1931'): ('HTd/Pp3fs', 'd/1931')}
 
 
-# OSHB 케레에 모음이 빠진 곳: 왕하 18:27 מימֵי (케레 메메)
-TEXT_FIX = {'מימֵ֥י': 'מֵ֥ימֵי'}
+# WLC·OSHB 부호가 틀린 곳: 왕하 18:27 מימֵי (모음 빠진 케레, 메메), 대상 3:1 דָויִד (요드 밑 히렉, 다비드)
+TEXT_FIX = {'מימֵ֥י': 'מֵ֥ימֵי', 'דָויִ֔ד': 'דָוִ֔יד'}
 
 
 def hebrew_word(el):
@@ -291,6 +291,13 @@ def to_translation_ref(book, c, v):
             return 22, v - 1
     if book == '2Kgs' and c == 12:  # 히브리어 12:1이 번역본 11:21이다
         return (11, 21) if v == 1 else (12, v - 1)
+    if book == '1Chr':  # 히브리어 5:27~41이 번역본 6:1~15, 6장은 열다섯 칸 밀린다. 12:5는 12:4 뒷부분이다
+        if c == 5 and v >= 27:
+            return 6, v - 26
+        if c == 6:
+            return 6, v + 15
+        if c == 12 and v >= 5:
+            return 12, v - 1
     return c, v
 
 
@@ -405,6 +412,8 @@ PARTS = [
     {'file': '1ki-12-22', 'title': '열왕기상 12~22장', 'name': '열왕기상', 'book': 11, 'lang': 'he', 'chs': range(12, 23), 'parse': parse_hebrew, 'src': '1Kgs.xml'},
     {'file': '2ki-01-13', 'title': '열왕기하 1~13장', 'name': '열왕기하', 'book': 12, 'lang': 'he', 'chs': range(1, 14), 'parse': parse_hebrew, 'src': '2Kgs.xml'},
     {'file': '2ki-14-25', 'title': '열왕기하 14~25장', 'name': '열왕기하', 'book': 12, 'lang': 'he', 'chs': range(14, 26), 'parse': parse_hebrew, 'src': '2Kgs.xml'},
+    {'file': '1ch-01-09', 'title': '역대상 1~9장', 'name': '역대상', 'book': 13, 'lang': 'he', 'chs': range(1, 10), 'parse': parse_hebrew, 'src': '1Chr.xml'},
+    {'file': '1ch-10-29', 'title': '역대상 10~29장', 'name': '역대상', 'book': 13, 'lang': 'he', 'chs': range(10, 30), 'parse': parse_hebrew, 'src': '1Chr.xml'},
     {'file': 'jhn-01', 'title': '요한복음 1장', 'name': '요한복음', 'book': 43, 'lang': 'gr', 'chs': [1], 'parse': parse_greek, 'src': 'Jn.txt'},
 ]
 
