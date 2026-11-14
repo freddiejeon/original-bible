@@ -22,6 +22,11 @@ H_STEM = {'q': '칼', 'N': '니팔', 'p': '피엘', 'P': '푸알', 'h': '히필'
           'o': '폴렐', 'O': '폴랄', 'r': '히트폴렐', 'm': '포엘', 'M': '포알', 'Q': '칼 수동',
           'k': '팔렐', 'K': '풀랄', 'l': '필펠', 'L': '폴팔', 'f': '히트팔펠', 'D': '니트파엘', 'j': '페알랄', 'i': '필렐',
           'u': '호트파알', 'c': '티프일', 'v': '히슈타펠', 'w': '니트팔렐', 'y': '니트포엘', 'z': '히트포엘'}
+# 아람어 동사 줄기 (OSHB 코드가 히브리어와 다름)
+A_STEM = {'q': '페알', 'Q': '페일', 'u': '히트페엘', 'p': '파엘', 'P': '이트파알', 'M': '히트파알', 'a': '아펠',
+          'h': '하펠', 's': '사펠', 'e': '샤펠', 'H': '호팔', 'i': '이트페엘', 't': '히슈타펠', 'v': '이슈타펠',
+          'w': '히트하펠', 'o': '폴렐', 'z': '이트포엘', 'r': '히트폴렐', 'f': '히트팔펠', 'b': '헤팔', 'c': '티펠',
+          'm': '포엘', 'l': '팔펠', 'L': '이트팔펠', 'O': '이트폴렐', 'G': '이타팔'}
 H_CONJ = {'p': '완료', 'q': '와우 연속 완료', 'i': '미완료', 'w': '와우 연속 미완료', 'h': '권유형', 'j': '지시형',
           'v': '명령형', 'r': '능동 분사', 's': '수동 분사', 'a': '부정사 절대형', 'c': '부정사 연계형'}
 H_P = {'1': '1인칭', '2': '2인칭', '3': '3인칭'}
@@ -48,12 +53,12 @@ def pgn(code):
     return parts
 
 
-def hebrew_morph(code):
-    """형태 코드 조각 하나를 (품사, [분석]) 으로 바꾼다."""
+def hebrew_morph(code, aram=False):
+    """형태 코드 조각 하나를 (품사, [분석]) 으로 바꾼다. aram: 아람어 줄기 이름을 씀"""
     pos, rest = code[0], code[1:]
     if pos == 'V':
         stem, conj, tail = rest[0], rest[1], rest[2:]
-        out = [H_STEM[stem], H_CONJ[conj]]
+        out = [(A_STEM if aram else H_STEM)[stem], H_CONJ[conj]]
         if conj in 'rs':       # 분사: 성·수·상태
             out += [H_G.get(tail[:1]), H_N.get(tail[1:2]), H_S.get(tail[2:3])]
         elif conj in 'ac':
@@ -133,9 +138,11 @@ def hebrew_word(el):
     for i, code in enumerate(codes):
         if code == 'Sp3fs' and i < len(pieces) and strip_marks(pieces[i]).endswith('ךְ'):   # OSHB 오표기 (창 24:17, 24:23)
             code = 'Sp2fs'
-        pos, parse = hebrew_morph(code)
+        pos, parse = hebrew_morph(code, morph[0] == 'A')
         seg = {'x': pieces[i] if i < len(pieces) else '', 'pos': pos, 'parse': parse}
-        if code[0] == 'S':
+        if morph[0] == 'A' and code == 'Td' and i > 0:   # 아람어 한정형 어미 -א/-ה: 표제어가 따로 없음
+            seg['pos'], seg['ko'] = '정관사 어미', '그'
+        elif code[0] == 'S':
             seg['ko'] = SUFFIX_GLOSS.get(code[2:5], '')
             if code[1] == 'p' and seg['ko']:
                 glosses.append(seg['ko'])
@@ -153,9 +160,11 @@ def hebrew_word(el):
         segs.append(seg)
     plain = text.replace('/', '')
     word = {'t': plain, 'segs': segs, 'gl': ' '.join(g.split(',')[0] for g in glosses if g),
-            '_ctx': (pieces, codes, [s.get('sid') for s in segs])}
+            '_ctx': (pieces, codes, [s.get('sid') for s in segs], morph[0] == 'A')}
     set_pron(word)
-    if morph[0] == 'A':
+    if morph[0] == 'A' and segs[0].get('sid') != 'H3026':
+        word['note'] = ARAM_NOTE
+    if morph[0] == 'A' and segs[0].get('sid') == 'H3026':
         word['note'] = '아람어입니다. 라반이 쓴 말로, 야곱이 히브리어로 부른 갈르엣과 같은 뜻인 "증거의 무더기"입니다.'
     if any(s.get('sid') == 'H3068' for s in segs):
         word['note'] = '하나님의 이름입니다. 유대 전통은 이 이름을 소리 내지 않고 아도나이(주)로 읽었고, 개역 성경은 여호와로 옮깁니다.'
@@ -164,8 +173,10 @@ def hebrew_word(el):
     return word
 
 
+ARAM_NOTE = '아람어입니다. 동사 줄기는 아람어 이름(페알·파엘·하펠 등)으로 적습니다.'
+
 # 카메츠+슈와가 늘 카메츠 하투프(o)인 낱말: 첫 어근 글자의 카메츠를 o로 읽는다
-HATUF_SID = {'H6944', 'H2451', 'H5797', 'H2706', 'H3801', 'H4888', 'H4893', 'H7141', 'H7145', 'H2670', 'H6195', 'H70', 'H551', 'H8483', 'H6995'}
+HATUF_SID = {'H6944', 'H2451', 'H5797', 'H2706', 'H3801', 'H4888', 'H4893', 'H7141', 'H7145', 'H2670', 'H6195', 'H70', 'H551', 'H8483', 'H6995', 'H1799'}
 O_MARKS = {pron.HOLAM, pron.HOLAM_H, pron.QATAN, pron.HQAM, pron.QUBUTS}
 
 
@@ -181,7 +192,13 @@ def lemma_has_o(sid, letters, j):
 A_CLASS_SID = {'H7592', 'H3423', 'H3289', 'H3988'}
 
 
-def pron_hints(pieces, codes, sids, maqqef):
+def lemma_has_qamets(sid, letters, j):
+    """표제어의 같은 자리 글자(j번째)가 카메츠를 가지는가: 아람어 מָרָדְתָּא (표제어 מָרָד)"""
+    lem = pron._he_letters(LEX_HE[sid].get('lemma') or '') if sid in LEX_HE else []
+    return 0 <= j < len(lem) and j < len(letters) and lem[j]['c'] == letters[j]['c'] and pron.QAMETS in lem[j]['m']
+
+
+def pron_hints(pieces, codes, sids, maqqef, aram=False):
     """형태 분석으로 카메츠 하투프 등 규칙만으로 정하기 어려운 읽기를 글자 번호별로 정한다."""
     force, start, keep_long = {}, 0, False
     nseg = len(pieces)
@@ -192,7 +209,9 @@ def pron_hints(pieces, codes, sids, maqqef):
         first_qs = next((j for j in qs if j + 1 < len(L) and pron.SHEVA in L[j + 1]['m']), None)
         if code[0] == 'V' and len(code) > 2:
             stem, conj = code[1], code[2]
-            if stem == 'q' and conj == 'c' and first_qs is not None:          # 칼 부정사 연계형: לְשָׁכְנִי (레쇼크니)
+            if aram and stem == 'q' and conj in 'cviwhj':                     # 아람어 페알에는 칼 규칙이 맞지 않음: לִמְהָךְ (림하크)
+                pass
+            elif stem == 'q' and conj == 'c' and first_qs is not None:          # 칼 부정사 연계형: לְשָׁכְנִי (레쇼크니)
                 force[start + first_qs] = 'o'
             elif stem == 'q' and conj == 'v' and first_qs is not None:        # 칼 명령형 + 접미사: הָרְגֵנִי (호르게니)
                 force[start + first_qs] = 'o'
@@ -215,6 +234,8 @@ def pron_hints(pieces, codes, sids, maqqef):
                     force[start + 1] = 'o'
             elif first_qs is not None and lemma_has_o(sid, L, first_qs):
                 force[start + first_qs] = 'o'                                 # 표제어가 o인 명사: אָבְנַיִם (오브나임)
+            elif aram and first_qs is not None and lemma_has_qamets(sid, L, first_qs):
+                force[start + first_qs] = 'a'                                 # 아람어 표제어의 긴 카메츠: מָרָדְתָּא (마라드타)
             if k == nseg - 1 and not lemma_has_o(sid, L, len(L) - 2):
                 keep_long = True                                              # הָעָם־ 은 그대로 (하암)
         elif code[0] == 'D' and sid in HATUF_SID and qs and qs[0] == 0:      # 부사: אָמְנָם (옴남)
@@ -223,7 +244,14 @@ def pron_hints(pieces, codes, sids, maqqef):
             nl = pron._he_letters(pieces[k + 1])
             if nl and nl[0]['c'] == 'י' and pron.SHEVA in nl[0]['m']:
                 force[start + len(L)] = 'e'
+        if aram and sid == 'H6925' and qs:                                   # 아람어 קֳדָם־ (코담)
+            force[start + qs[-1]] = 'a'
         start += len(L)
+    if aram:                                                                     # 아람어 하텝 카메츠 앞 카메츠는 길다: לָקֳבֵל (라코벨), אֲבָהֳתַנָא (아바호타나)
+        L = pron._he_letters(''.join(pieces))
+        for j in range(len(L) - 1):
+            if pron.QAMETS in L[j]['m'] and pron.HQAM in L[j + 1]['m']:
+                force.setdefault(j, 'a')
     if maqqef and not keep_long:                                                                 # 막켑 앞 닫힌 끝 음절: חָק־ (호크), שְׁמָר־ (셰모르)
         L = pron._he_letters(''.join(pieces))
         n = len(L)
@@ -233,9 +261,9 @@ def pron_hints(pieces, codes, sids, maqqef):
 
 
 def set_pron(word, maqqef=False):
-    pieces, codes, sids = word['_ctx']
+    pieces, codes, sids, aram = word['_ctx']
     plain = ''.join(pieces)
-    force = pron_hints(pieces, codes, sids, maqqef)
+    force = pron_hints(pieces, codes, sids, maqqef, aram)
     toks = pron.hebrew(plain, force=force)
     word['tr'], word['hg'] = pron.to_latin(toks), pron.to_hangul(toks)
     base = pron.hebrew(plain)
@@ -330,7 +358,10 @@ def parse_hebrew(src, ch):
             elif tag == 'note' and el.get('type') == 'variant' and ketiv:
                 for w in el.iter(OSIS + 'w'):
                     words.append(hebrew_word(w))
+                aram = words[-1].get('note') == ARAM_NOTE
                 words[-1]['note'] = f'기록된 글자(케티브)는 {ketiv}이고, 본문에는 읽는 형태(케레)를 보여 줍니다.'
+                if aram:
+                    words[-1]['note'] = '아람어입니다. ' + words[-1]['note']
                 ketiv = None
         if (v_ch, v_n) != (he_ch, he_v):
             words[0]['note'] = f'히브리어 성경에서는 {he_ch}:{he_v}절입니다. 번역본과 절 번호가 다릅니다.'
@@ -422,6 +453,7 @@ PARTS = [
     {'file': '1ch-10-29', 'title': '역대상 10~29장', 'name': '역대상', 'book': 13, 'lang': 'he', 'chs': range(10, 30), 'parse': parse_hebrew, 'src': '1Chr.xml'},
     {'file': '2ch-01-09', 'title': '역대하 1~9장', 'name': '역대하', 'book': 14, 'lang': 'he', 'chs': range(1, 10), 'parse': parse_hebrew, 'src': '2Chr.xml'},
     {'file': '2ch-10-36', 'title': '역대하 10~36장', 'name': '역대하', 'book': 14, 'lang': 'he', 'chs': range(10, 37), 'parse': parse_hebrew, 'src': '2Chr.xml'},
+    {'file': 'ezr-01-10', 'title': '에스라 1~10장', 'name': '에스라', 'book': 15, 'lang': 'he', 'chs': range(1, 11), 'parse': parse_hebrew, 'src': 'Ezra.xml'},
     {'file': 'jhn-01', 'title': '요한복음 1장', 'name': '요한복음', 'book': 43, 'lang': 'gr', 'chs': [1], 'parse': parse_greek, 'src': 'Jn.txt'},
 ]
 

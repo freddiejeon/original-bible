@@ -452,6 +452,11 @@ if __name__ == '__main__':
         (lambda w: hebrew(w, force={1: 'a'}), 'מְשָׁרְתוֹ', 'meshareto', '메샤레토'),
         (lambda w: hebrew(w, force={1: 'a'}), 'לְשָׁרְתוֹ', 'leshareto', '레샤레토'),
         (lambda w: hebrew(w, force={1: 'e'}), 'בַּיְאֹר', "baye'or", '바예오르'),
+        # 아람어 (에스라): 표제어의 긴 카메츠, 하텝 카메츠 앞 긴 카메츠, 페알 부정사에는 칼 규칙을 쓰지 않음
+        (lambda w: hebrew(w, force={1: 'a'}), 'מָרָדְתָּא', 'maradta', '마라드타'),
+        (lambda w: hebrew(w, force={0: 'a'}), 'לָקֳבֵל', 'laqovel', '라코벨'),
+        (lambda w: hebrew(w, force={0: 'o'}), 'דָּכְרָנַיָּא', 'dokhranaya', '도크라나야'),
+        (hebrew, 'לִמְהָךְ', 'limhakh', '림하크'),
     ]
     bad = 0
     for fn, w, lat, ko in tests:

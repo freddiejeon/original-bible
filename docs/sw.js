@@ -1,6 +1,6 @@
 // 앱 화면과 본문을 저장해 두고 오프라인에서도 연다. 값은 build_app.py가 채운다.
-const CACHE = 'ob-fdbb4509db';
-const FILES = ["./", "icons/icon-192.png", "icons/icon-512.png", "index.html", "manifest.webmanifest", "parts/1ch-01-09.json", "parts/1ch-10-29.json", "parts/1ki-01-11.json", "parts/1ki-12-22.json", "parts/1sa-01-15.json", "parts/1sa-16-31.json", "parts/2ch-01-09.json", "parts/2ch-10-36.json", "parts/2ki-01-13.json", "parts/2ki-14-25.json", "parts/2sa-01-12.json", "parts/2sa-13-24.json", "parts/deu-01-11.json", "parts/deu-12-34.json", "parts/exo-01-18.json", "parts/exo-19-40.json", "parts/gen-01-11.json", "parts/gen-12-25.json", "parts/gen-26-50.json", "parts/jdg-01-21.json", "parts/jhn-01.json", "parts/jos-01-24.json", "parts/lev-01-27.json", "parts/num-01-19.json", "parts/num-20-36.json", "parts/rut-01-04.json"];
+const CACHE = 'ob-2c840e39e3';
+const FILES = ["./", "icons/icon-192.png", "icons/icon-512.png", "index.html", "manifest.webmanifest", "parts/1ch-01-09.json", "parts/1ch-10-29.json", "parts/1ki-01-11.json", "parts/1ki-12-22.json", "parts/1sa-01-15.json", "parts/1sa-16-31.json", "parts/2ch-01-09.json", "parts/2ch-10-36.json", "parts/2ki-01-13.json", "parts/2ki-14-25.json", "parts/2sa-01-12.json", "parts/2sa-13-24.json", "parts/deu-01-11.json", "parts/deu-12-34.json", "parts/exo-01-18.json", "parts/exo-19-40.json", "parts/ezr-01-10.json", "parts/gen-01-11.json", "parts/gen-12-25.json", "parts/gen-26-50.json", "parts/jdg-01-21.json", "parts/jhn-01.json", "parts/jos-01-24.json", "parts/lev-01-27.json", "parts/num-01-19.json", "parts/num-20-36.json", "parts/rut-01-04.json"];
 const AUDIO = 'ob-audio-1';   // 음성은 들은 것부터 저장한다. 앱을 고쳐도 지우지 않는다
 
 // 아이폰 사파리는 음성을 범위 요청으로 받으므로 206으로 잘라 준다
