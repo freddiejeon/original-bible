@@ -98,6 +98,7 @@ details ul { padding-left: 18px; margin: 8px 0; display: flex; flex-direction: c
   <h1>원어 대조 성경</h1>
   <div class="nav">
     <button class="chip" id="prev" aria-label="이전 장">‹</button>
+    <select id="book" aria-label="책 선택"></select>
     <select id="chapter" aria-label="장 선택"></select>
     <button class="chip" id="next" aria-label="다음 장">›</button>
   </div>
@@ -124,6 +125,14 @@ details ul { padding-left: 18px; margin: 8px 0; display: flex; flex-direction: c
 <script>
 const MANIFEST = JSON.parse(document.getElementById('manifest').textContent);
 const FLAT = MANIFEST.flatMap((p, pi) => p.chapters.map((id, ci) => ({ id, pi, ci })));
+// 장 이름("창세기 1장")에서 책 이름을 떼어 책별로 묶는다. 한 책이 여러 구간에 걸쳐도 하나로 모인다.
+const BOOKS = [];
+FLAT.forEach((f, i) => {
+  const name = f.id.replace(/\s*\d+(장|편)$/, '');
+  let b = BOOKS[BOOKS.length - 1];
+  if (!b || b.name !== name) BOOKS.push(b = { name, start: i, n: 0 });
+  f.b = BOOKS.length - 1; f.label = f.id.slice(name.length).trim(); b.n++;
+});
 const cache = {};
 const AUDIO = 'audio/';
 let player = null;
@@ -202,8 +211,7 @@ const noAccent = s => s.normalize('NFD').replace(/[֑-ֽֿ֯]/g, '').normalize('
 const show = (t, lang) => lang === 'he' && !state.accent ? noAccent(t) : t;
 
 function renderBar() {
-  $('chapter').innerHTML = MANIFEST.map((p, pi) => `<optgroup label="${esc(p.title)}">` + p.chapters.map((id, ci) =>
-    `<option value="${pi}:${ci}">${esc(id)}</option>`).join('') + '</optgroup>').join('');
+  $('book').innerHTML = BOOKS.map((b, bi) => `<option value="${bi}">${esc(b.name)}</option>`).join('');
   $('toggles').innerHTML = TOGGLES.map(([k, label]) => `<button class="chip" data-t="${k}" aria-pressed="${!!state[k]}">${label}</button>`).join('') +
     `<button class="chip" data-size="-1" aria-label="글자 작게">가−</button><button class="chip" data-size="1" aria-label="글자 크게">가+</button>`;
 }
@@ -211,8 +219,14 @@ function renderBar() {
 async function goTo(part, ch, top) {
   closeSheet();
   state.part = part; state.ch = ch; save('state', state);
-  $('chapter').value = part + ':' + ch;
-  const at = FLAT.findIndex(f => f.pi === part && f.ci === ch);
+  const at = FLAT.findIndex(f => f.pi === part && f.ci === ch), bi = FLAT[at].b;
+  $('book').value = bi;
+  if ($('chapter').dataset.book !== String(bi)) {
+    $('chapter').dataset.book = bi;
+    $('chapter').innerHTML = FLAT.slice(BOOKS[bi].start, BOOKS[bi].start + BOOKS[bi].n)
+      .map((f, k) => `<option value="${BOOKS[bi].start + k}">${esc(f.label)}</option>`).join('');
+  }
+  $('chapter').value = at;
   $('prev').disabled = at === 0; $('next').disabled = at === FLAT.length - 1;
   try {
     if (!cache[part]) {
@@ -300,7 +314,8 @@ function closeSheet() {
   if (on) { on.classList.remove('on'); on.focus({ preventScroll: true }); }
 }
 
-$('chapter').addEventListener('change', e => { const [p, c] = e.target.value.split(':').map(Number); goTo(p, c, true); });
+$('book').addEventListener('change', e => { const f = FLAT[BOOKS[+e.target.value].start]; goTo(f.pi, f.ci, true); });
+$('chapter').addEventListener('change', e => { const f = FLAT[+e.target.value]; goTo(f.pi, f.ci, true); });
 $('prev').addEventListener('click', () => step(-1));
 $('next').addEventListener('click', () => step(1));
 $('toggles').addEventListener('click', e => {
