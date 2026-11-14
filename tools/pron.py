@@ -128,7 +128,7 @@ def hebrew(word, info=None, force=None):
             x['init_u'] = True
         elif c == 'ו' and not m and prev and HIRIQ in prev['m'] and i == n - 2 and L[i + 1]['c'] == 'א':  # 모세오경의 הִוא (히)
             x['silent'] = True
-        elif c == 'ו' and not m and prev and QUBUTS in prev['m']:   # 키부츠 뒤 점 없는 와우는 모음 문자: לֻוחֹת (루호트, 신 10:1)
+        elif c == 'ו' and m <= {DAGESH} and prev and QUBUTS in prev['m']:   # 키부츠 뒤 점 없는 와우·슈렉 와우는 모음 문자: לֻוחֹת (루호트, 신 10:1), פְתֻוּחוֹת (페투호트, 느 1:6)
             x['silent'] = True
         elif c == 'ו' and not m and i >= 2 and prev['c'] == 'א' and not prev['m'] and QUBUTS in L[i - 2]['m']:
             x['silent'] = prev['silent'] = True                  # 키부츠 뒤 묵음 알레프와 점 없는 와우: הָרֻאובֵנִי (하루베니, 왕하 10:33)
@@ -199,8 +199,9 @@ def hebrew(word, info=None, force=None):
             elif SHEVA in nx['m'] and nx2 and (nx2['c'] == 'ת' and DAGESH in nx2['m'] and ''.join(y['c'] for y in L[i + 3:]) in ('', 'י', 'ם', 'ן')
                                                or i + 2 == n - 1 and SHEVA in nx2['m']):
                 nx['closed'] = True
-            # 휴지형 완료 1인칭 복수: שָׁמָעְנוּ (샤마누). 어근 눈인 וְיֵאָמְנוּ 는 제외
-            elif SHEVA in nx['m'] and i and i + 3 == n - 1 and nx2['c'] == 'נ' and (L[i - 1]['m'] & {QAMETS, PATAH} or ''.join(y['c'] for y in L).endswith('מהמהנו')):
+            # 휴지형 완료 1인칭 복수: שָׁמָעְנוּ (샤마누), 히필 הִרְשָׁעְנוּ (히르샤누, 느 9:33). 어근 눈인 וְיֵאָמְנוּ 는 제외
+            elif SHEVA in nx['m'] and i and i + 3 == n - 1 and nx2['c'] == 'נ' and (L[i - 1]['m'] & {QAMETS, PATAH} or ''.join(y['c'] for y in L).endswith('מהמהנו')
+                                                                            or i == 2 and L[0]['c'] == 'ה' and HIRIQ in L[0]['m'] and SHEVA in L[1]['m']):
                 nx['closed'] = True
             # 닫힌 음절(슈와 뒤 약한 다게쉬) 또는 부정사 + 3남단 접미사: הָפְכִּי (호프키), שָׁמְעוֹ (숌오)
             elif SHEVA in nx['m'] and nx2 and (nx2['c'] in BEGAD and DAGESH in nx2['m']
@@ -439,6 +440,7 @@ if __name__ == '__main__':
         (hebrew, 'נָחְנוּ', 'nachnu', '나흐누'), (hebrew, 'וְיֵאָמְנוּ', "veye'amenu", '베예아메누'), (hebrew, 'בְּהֵאָבְקוֹ', "behe'aveqo", '베헤아베코'),
         (hebrew, 'וָאָרְדְּ', "va'ard", '바아르드'), (hebrew, 'יָחְנְךָ', 'yochnekha', '요흐네카'), (hebrew, 'הִתְמַהְמָהְנוּ', 'hitmahmahnu', '히트마흐마흐누'),
         (hebrew, 'לַשָּׁוְא', 'lashav', '라샤브'), (hebrew, 'מִלְמָעְלָה', 'milmala', '밀말라'), (hebrew, 'וְיָשְׁפֵה', 'veyashfe', '베야쉬페'),
+        (hebrew, 'פְתֻוּחוֹת', 'fetuchot', '페투호트'), (hebrew, 'הִרְשָׁעְנוּ', 'hirshanu', '히르샤누'),
         (hebrew, 'פָּנָיַ', 'panay', '파나이'), (hebrew, 'לֻוחֹת', 'luchot', '루호트'), (hebrew, 'מִזְבּחֹתָם', 'mizbechotam', '미즈베호탐'), (hebrew, 'שֵׂיוֹ', 'seyo', '세요'), (hebrew, 'אִיש', 'ish', '이쉬'), (hebrew, 'וְהַיְבוּסִי', 'vehayevusi', '베하예부시'),
         (hebrew, 'קָדְשֵׁי', 'qodshe', '코드셰'),
         (hebrew, 'יִשָּׂשכָר', 'yisakhar', '이사카르'), (hebrew, 'פְּדָהצוּר', 'pedatsur', '페다추르'),

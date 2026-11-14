@@ -332,7 +332,20 @@ def to_translation_ref(book, c, v):
             return c + 1, 1
         if c in (2, 14):
             return c, v + 1
+    if book == 'Neh':   # 히브리어 3:33~38이 번역본 4:1~6, 10:1이 9:38이다. 번역본 7:68은 WLC에 없다
+        if c == 3 and v >= 33:
+            return 4, v - 32
+        if c == 4:
+            return 4, v + 6
+        if c == 7 and v >= 68:
+            return 7, v + 1
+        if c == 10:
+            return (9, 38) if v == 1 else (10, v - 1)
     return c, v
+
+
+# 번역본에만 있고 히브리어 원문에 없는 절 (권 번호, 장): 절 목록. 원어 칸은 비워 둔다
+NO_ORIGINAL = {(16, 7): [68]}
 
 
 def parse_hebrew(src, ch):
@@ -454,6 +467,7 @@ PARTS = [
     {'file': '2ch-01-09', 'title': '역대하 1~9장', 'name': '역대하', 'book': 14, 'lang': 'he', 'chs': range(1, 10), 'parse': parse_hebrew, 'src': '2Chr.xml'},
     {'file': '2ch-10-36', 'title': '역대하 10~36장', 'name': '역대하', 'book': 14, 'lang': 'he', 'chs': range(10, 37), 'parse': parse_hebrew, 'src': '2Chr.xml'},
     {'file': 'ezr-01-10', 'title': '에스라 1~10장', 'name': '에스라', 'book': 15, 'lang': 'he', 'chs': range(1, 11), 'parse': parse_hebrew, 'src': 'Ezra.xml'},
+    {'file': 'neh-01-13', 'title': '느헤미야 1~13장', 'name': '느헤미야', 'book': 16, 'lang': 'he', 'chs': range(1, 14), 'parse': parse_hebrew, 'src': 'Neh.xml'},
     {'file': 'jhn-01', 'title': '요한복음 1장', 'name': '요한복음', 'book': 43, 'lang': 'gr', 'chs': [1], 'parse': parse_greek, 'src': 'Jn.txt'},
 ]
 
@@ -464,6 +478,8 @@ for part in PARTS:
     for ch in part['chs']:
         words = part['parse'](part['src'], ch)
         ko, en = side_text('korean', part['book'], ch), side_text('kjv', part['book'], ch)
+        for n in NO_ORIGINAL.get((part['book'], ch), []):
+            words[n] = []
         assert set(ko) == set(en) == set(words), (part['name'], ch, len(ko), len(en), len(words))
         chapters.append({'id': f"{part['name']} {ch}장", 'lang': part['lang'],
                          'verses': [{'n': n, 'ko': ko[n], 'en': en[n], 'w': words[n]} for n in sorted(words)]})

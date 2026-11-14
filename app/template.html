@@ -105,7 +105,7 @@ details ul { padding-left: 18px; margin: 8px 0; display: flex; flex-direction: c
   <div class="toggles" id="toggles"></div>
 </div></header>
 <main>
-  <p class="lead">원어 단어를 누르면 문법과 뜻이 나옵니다. <b>붉은 글자</b>는 동사입니다. 지금은 창세기부터 에스라까지와 요한복음 1장이 들어 있습니다. 에스라 4:8~6:18과 7:12~26은 아람어입니다.</p>
+  <p class="lead">원어 단어를 누르면 문법과 뜻이 나옵니다. <b>붉은 글자</b>는 동사입니다. 지금은 창세기부터 느헤미야까지와 요한복음 1장이 들어 있습니다. 에스라 4:8~6:18과 7:12~26은 아람어입니다.</p>
   <div id="verses"></div>
   <details>
     <summary>본문 출처와 한계</summary>
@@ -261,7 +261,8 @@ function renderVerses() {
     }).join('');
     const trans = (state.ko ? `<p class="ko">${esc(v.ko)}</p>` : '') + (state.en ? `<p class="en">${esc(v.en)}</p>` : '');
     return `<article class="verse"><div class="num">${v.n}</div><div class="body${solo ? ' solo' : ''}">` +
-      (solo ? '' : `<div class="trans">${trans}</div>`) + `<div class="words ${c.lang}">${words}</div></div></article>`;
+      (solo ? '' : `<div class="trans">${trans}</div>`) +
+      (words ? `<div class="words ${c.lang}">${words}</div>` : '<p class="lead">원어 본문(WLC)에는 이 절이 없습니다.</p>') + '</div></article>';
   }).join('');
   document.documentElement.style.setProperty('--scale', state.scale);
 }
