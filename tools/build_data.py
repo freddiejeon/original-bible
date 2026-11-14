@@ -116,8 +116,9 @@ OSHB_FIX = {('HR/Sp2mp', 'm/4480 a'): ('HR/Sp2mp', '4480 a'), ('HVpp1cs/Pp3fs', 
             ('HTd/Sp3fs', 'd/1931'): ('HTd/Pp3fs', 'd/1931')}
 
 
-# WLC·OSHB 부호가 틀린 곳: 왕하 18:27 מימֵי (모음 빠진 케레, 메메), 대상 3:1 דָויִד (요드 밑 히렉, 다비드)
-TEXT_FIX = {'מימֵ֥י': 'מֵ֥ימֵי', 'דָויִ֔ד': 'דָוִ֔יד'}
+# WLC·OSHB 부호가 틀린 곳: 왕하 18:27 מימֵי (모음 빠진 케레, 메메), 대상 3:1 דָויִד (요드 밑 히렉, 다비드),
+# 대하 35:4 הָכִונוּ (케레 הָכִינוּ, 하키누), 대하 36:14 מְעָול (케레 מְעָל, 림올)
+TEXT_FIX = {'מימֵ֥י': 'מֵ֥ימֵי', 'דָויִ֔ד': 'דָוִ֔יד', 'וְ/הָכִ֥ונוּ': 'וְ/הָכִ֥ינוּ', 'לִ/מְעָול': 'לִ/מְעָל'}
 
 
 def hebrew_word(el):
@@ -298,6 +299,11 @@ def to_translation_ref(book, c, v):
             return 6, v + 15
         if c == 12 and v >= 5:
             return 12, v - 1
+    if book == '2Chr':  # 히브리어 1:18이 번역본 2:1, 13:23이 번역본 14:1이다
+        if (c, v) in ((1, 18), (13, 23)):
+            return c + 1, 1
+        if c in (2, 14):
+            return c, v + 1
     return c, v
 
 
@@ -414,6 +420,8 @@ PARTS = [
     {'file': '2ki-14-25', 'title': '열왕기하 14~25장', 'name': '열왕기하', 'book': 12, 'lang': 'he', 'chs': range(14, 26), 'parse': parse_hebrew, 'src': '2Kgs.xml'},
     {'file': '1ch-01-09', 'title': '역대상 1~9장', 'name': '역대상', 'book': 13, 'lang': 'he', 'chs': range(1, 10), 'parse': parse_hebrew, 'src': '1Chr.xml'},
     {'file': '1ch-10-29', 'title': '역대상 10~29장', 'name': '역대상', 'book': 13, 'lang': 'he', 'chs': range(10, 30), 'parse': parse_hebrew, 'src': '1Chr.xml'},
+    {'file': '2ch-01-09', 'title': '역대하 1~9장', 'name': '역대하', 'book': 14, 'lang': 'he', 'chs': range(1, 10), 'parse': parse_hebrew, 'src': '2Chr.xml'},
+    {'file': '2ch-10-36', 'title': '역대하 10~36장', 'name': '역대하', 'book': 14, 'lang': 'he', 'chs': range(10, 37), 'parse': parse_hebrew, 'src': '2Chr.xml'},
     {'file': 'jhn-01', 'title': '요한복음 1장', 'name': '요한복음', 'book': 43, 'lang': 'gr', 'chs': [1], 'parse': parse_greek, 'src': 'Jn.txt'},
 ]
 
