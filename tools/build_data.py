@@ -123,7 +123,8 @@ OSHB_FIX = {('HR/Sp2mp', 'm/4480 a'): ('HR/Sp2mp', '4480 a'), ('HVpp1cs/Pp3fs', 
 
 # WLC·OSHB 부호가 틀린 곳: 왕하 18:27 מימֵי (모음 빠진 케레, 메메), 대상 3:1 דָויִד (요드 밑 히렉, 다비드),
 # 대하 35:4 הָכִונוּ (케레 הָכִינוּ, 하키누), 대하 36:14 מְעָול (케레 מְעָל, 림올)
-TEXT_FIX = {'מימֵ֥י': 'מֵ֥ימֵי', 'דָויִ֔ד': 'דָוִ֔יד', 'וְ/הָכִ֥ונוּ': 'וְ/הָכִ֥ינוּ', 'לִ/מְעָול': 'לִ/מְעָל'}
+TEXT_FIX = {'מימֵ֥י': 'מֵ֥ימֵי', 'דָויִ֔ד': 'דָוִ֔יד', 'וְ/הָכִ֥ונוּ': 'וְ/הָכִ֥ינוּ', 'לִ/מְעָול': 'לִ/מְעָל',
+            'וַ֠/תָּבוֹאינָה': 'וַ֠/תָּבוֹאנָה', 'נִקְרֵ֨אתי֙': 'נִקְרֵ֨אתִי֙'}   # 에 4:4, 4:11 WLC 특이 철자
 
 
 def hebrew_word(el):
@@ -468,6 +469,7 @@ PARTS = [
     {'file': '2ch-10-36', 'title': '역대하 10~36장', 'name': '역대하', 'book': 14, 'lang': 'he', 'chs': range(10, 37), 'parse': parse_hebrew, 'src': '2Chr.xml'},
     {'file': 'ezr-01-10', 'title': '에스라 1~10장', 'name': '에스라', 'book': 15, 'lang': 'he', 'chs': range(1, 11), 'parse': parse_hebrew, 'src': 'Ezra.xml'},
     {'file': 'neh-01-13', 'title': '느헤미야 1~13장', 'name': '느헤미야', 'book': 16, 'lang': 'he', 'chs': range(1, 14), 'parse': parse_hebrew, 'src': 'Neh.xml'},
+    {'file': 'est-01-10', 'title': '에스더 1~10장', 'name': '에스더', 'book': 17, 'lang': 'he', 'chs': range(1, 11), 'parse': parse_hebrew, 'src': 'Esth.xml'},
     {'file': 'jhn-01', 'title': '요한복음 1장', 'name': '요한복음', 'book': 43, 'lang': 'gr', 'chs': [1], 'parse': parse_greek, 'src': 'Jn.txt'},
 ]
 
