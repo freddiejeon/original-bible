@@ -124,7 +124,11 @@ OSHB_FIX = {('HR/Sp2mp', 'm/4480 a'): ('HR/Sp2mp', '4480 a'), ('HVpp1cs/Pp3fs', 
 # WLC·OSHB 부호가 틀린 곳: 왕하 18:27 מימֵי (모음 빠진 케레, 메메), 대상 3:1 דָויִד (요드 밑 히렉, 다비드),
 # 대하 35:4 הָכִונוּ (케레 הָכִינוּ, 하키누), 대하 36:14 מְעָול (케레 מְעָל, 림올)
 TEXT_FIX = {'מימֵ֥י': 'מֵ֥ימֵי', 'דָויִ֔ד': 'דָוִ֔יד', 'וְ/הָכִ֥ונוּ': 'וְ/הָכִ֥ינוּ', 'לִ/מְעָול': 'לִ/מְעָל',
-            'וַ֠/תָּבוֹאינָה': 'וַ֠/תָּבוֹאנָה', 'נִקְרֵ֨אתי֙': 'נִקְרֵ֨אתִי֙'}   # 에 4:4, 4:11 WLC 특이 철자
+            'וַ֠/תָּבוֹאינָה': 'וַ֠/תָּבוֹאנָה', 'נִקְרֵ֨אתי֙': 'נִקְרֵ֨אתִי֙',
+            'יַחֲרִ֑ישׁו': 'יַחֲרִ֑ישׁוּ',
+            'וּ/שְׁלם': 'וּ/שְׁלָם',
+            'הְֽ֭/מִ/יָּמֶי/ךָ': 'הֲֽ֭/מִ/יָּמֶי/ךָ',
+            'הְֽ֭/תַרְעִישֶׁ/נּוּ': 'הֲֽ֭/תַרְעִישֶׁ/נּוּ'}   # 에 4:4, 4:11, 욥 11:3 (יַחֲרִישׁוּ), 22:21 (וּשְׁלָם), 38:12·39:20 (의문사 הֲ) WLC 특이 철자
 
 
 def hebrew_word(el):
@@ -177,6 +181,8 @@ def hebrew_word(el):
 ARAM_NOTE = '아람어입니다. 동사 줄기는 아람어 이름(페알·파엘·하펠 등)으로 적습니다.'
 
 # 카메츠+슈와가 늘 카메츠 하투프(o)인 낱말: 첫 어근 글자의 카메츠를 o로 읽는다
+# 스트롱 표제어가 o가 아닌 모음으로 적힌 명사: שֹׁרֶשׁ (스트롱 שֶׁרֶשׁ) → שָׁרְשֵׁי (쇼르셰, 욥 13:27)
+O_LEMMA_SID = {'H8328'}
 HATUF_SID = {'H6944', 'H2451', 'H5797', 'H2706', 'H3801', 'H4888', 'H4893', 'H7141', 'H7145', 'H2670', 'H6195', 'H70', 'H551', 'H8483', 'H6995', 'H1799'}
 O_MARKS = {pron.HOLAM, pron.HOLAM_H, pron.QATAN, pron.HQAM, pron.QUBUTS}
 
@@ -233,11 +239,11 @@ def pron_hints(pieces, codes, sids, maqqef, aram=False):
                 force[start] = 'o'
                 if len(L) > 2 and 1 in qs and pron.DAGESH in L[2]['m']:       # 겹자음 앞 닫힌 음절도 o: קָטָנִּי (코토니, 왕상 12:10)
                     force[start + 1] = 'o'
-            elif first_qs is not None and lemma_has_o(sid, L, first_qs):
+            elif first_qs is not None and (lemma_has_o(sid, L, first_qs) or sid in O_LEMMA_SID):
                 force[start + first_qs] = 'o'                                 # 표제어가 o인 명사: אָבְנַיִם (오브나임)
             elif aram and first_qs is not None and lemma_has_qamets(sid, L, first_qs):
                 force[start + first_qs] = 'a'                                 # 아람어 표제어의 긴 카메츠: מָרָדְתָּא (마라드타)
-            if k == nseg - 1 and not lemma_has_o(sid, L, len(L) - 2):
+            if k == nseg - 1 and not lemma_has_o(sid, L, len(L) - 2) and not (sid == 'H7227' and maqqef):   # רָב־ 은 명사 רֹב (로브, 욥 23:6)
                 keep_long = True                                              # הָעָם־ 은 그대로 (하암)
         elif code[0] == 'D' and sid in HATUF_SID and qs and qs[0] == 0:      # 부사: אָמְנָם (옴남)
             force[start] = 'o'
@@ -333,6 +339,11 @@ def to_translation_ref(book, c, v):
             return c + 1, 1
         if c in (2, 14):
             return c, v + 1
+    if book == 'Job':   # 히브리어 40:25~32가 번역본 41:1~8, 41:1~26이 41:9~34이다
+        if c == 40 and v >= 25:
+            return 41, v - 24
+        if c == 41:
+            return 41, v + 8
     if book == 'Neh':   # 히브리어 3:33~38이 번역본 4:1~6, 10:1이 9:38이다. 번역본 7:68은 WLC에 없다
         if c == 3 and v >= 33:
             return 4, v - 32
@@ -470,6 +481,8 @@ PARTS = [
     {'file': 'ezr-01-10', 'title': '에스라 1~10장', 'name': '에스라', 'book': 15, 'lang': 'he', 'chs': range(1, 11), 'parse': parse_hebrew, 'src': 'Ezra.xml'},
     {'file': 'neh-01-13', 'title': '느헤미야 1~13장', 'name': '느헤미야', 'book': 16, 'lang': 'he', 'chs': range(1, 14), 'parse': parse_hebrew, 'src': 'Neh.xml'},
     {'file': 'est-01-10', 'title': '에스더 1~10장', 'name': '에스더', 'book': 17, 'lang': 'he', 'chs': range(1, 11), 'parse': parse_hebrew, 'src': 'Esth.xml'},
+    {'file': 'job-01-21', 'title': '욥기 1~21장', 'name': '욥기', 'book': 18, 'lang': 'he', 'chs': range(1, 22), 'parse': parse_hebrew, 'src': 'Job.xml'},
+    {'file': 'job-22-42', 'title': '욥기 22~42장', 'name': '욥기', 'book': 18, 'lang': 'he', 'chs': range(22, 43), 'parse': parse_hebrew, 'src': 'Job.xml'},
     {'file': 'jhn-01', 'title': '요한복음 1장', 'name': '요한복음', 'book': 43, 'lang': 'gr', 'chs': [1], 'parse': parse_greek, 'src': 'Jn.txt'},
 ]
 
