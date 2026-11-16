@@ -97,7 +97,9 @@ def _perpetual_qere(word):
     """ירושלם 의 영구 케레: 라멧에 파타(카메츠)와 히렉이 함께 찍히면 요드를 넣어 읽는다 (예루샬라임).
     방향의 헤가 붙어 슈와와 파타가 함께 찍히면 요드에 슈와를 둔다: יְרוּשָׁלְַמָה (예루샬라이마, 왕상 10:2)."""
     w = re.sub('ִ([֑-֯]*)([ַָ])', r'\2\1' + 'יִ', ud.normalize('NFD', word))
-    return re.sub('ְ([֑-֯]*)([ַָ])', r'\2\1' + 'יְ', w)
+    w = re.sub('ְ([֑-֯]*)([ַָ])', r'\2\1' + 'יְ', w)
+    # 히렉 + 요드 밑에 찍힌 숨은 파타는 끝 글자로 옮긴다: הוֹפִֽיַע (호피아, 시 94:1)
+    return re.sub('(ִ[^א-ת]*י[^א-תַ]*)ַ([^א-ת]*[עח])$', r'\1\2ַ', w)
 
 
 def hebrew(word, info=None, force=None):
@@ -112,6 +114,8 @@ def hebrew(word, info=None, force=None):
     # 하나님의 이름은 기록된 자음대로 읽지 않고 전통 읽기를 적는다
     if n >= 4 and ''.join(x['c'] for x in L[-4:]) == 'יהוה':
         if HIRIQ in L[-2]['m']:
+            if n > 4 and TSERE in L[-5]['m']:                       # וְלֵיהוִה 는 לֵאלֹהִים 처럼 (벨로힘, 시 68:20)
+                return hebrew(word[:word.index('י')] + 'אלֹהִים')
             return hebrew(word[:word.index('י')]) + hebrew('אֱלֹהִים')
         prefix = hebrew(word[:word.index('י')]) if n > 4 else []
         rest = [('C', 'd', 'd'), ('V', 'o', ['o']), ('C', 'n', 'n'), ('V', 'a', ['a']), ('V', 'i', ['i'])]
@@ -201,7 +205,7 @@ def hebrew(word, info=None, force=None):
                 nx['closed'] = True
             # 휴지형 완료 1인칭 복수: שָׁמָעְנוּ (샤마누), 히필 הִרְשָׁעְנוּ (히르샤누, 느 9:33). 어근 눈인 וְיֵאָמְנוּ 는 제외
             elif SHEVA in nx['m'] and i and i + 3 == n - 1 and nx2['c'] == 'נ' and (L[i - 1]['m'] & {QAMETS, PATAH} or ''.join(y['c'] for y in L).endswith('מהמהנו')
-                                                                            or i == 2 and L[0]['c'] == 'ה' and HIRIQ in L[0]['m'] and SHEVA in L[1]['m']):
+                                                                            or i == 2 and L[0]['c'] in 'הנ' and HIRIQ in L[0]['m'] and SHEVA in L[1]['m']):
                 nx['closed'] = True
             # 닫힌 음절(슈와 뒤 약한 다게쉬) 또는 부정사 + 3남단 접미사: הָפְכִּי (호프키), שָׁמְעוֹ (숌오)
             elif SHEVA in nx['m'] and nx2 and (nx2['c'] in BEGAD and DAGESH in nx2['m']
@@ -223,6 +227,9 @@ def hebrew(word, info=None, force=None):
             x['closed'] = True
     # 3인칭 여성 단수 완료 + 접미사의 슈와는 묵음: הֲרָגָתְהוּ (하라가트후, 삿 9:54)
     if n >= 4 and cons.endswith('תהו') and SHEVA in L[n - 3]['m'] and QAMETS in L[n - 4]['m']:
+        L[n - 3]['closed'] = True
+    # 휴지형 3인칭 여성 단수 완료 + 1인칭 접미사도 같다: כִּסָּֽתְנִי (키사트니, 시 44:16), חִיָּֽתְנִי (히야트니)
+    if n >= 5 and cons.endswith('תני') and SHEVA in L[n - 3]['m'] and QAMETS in L[n - 4]['m'] and DAGESH in L[n - 4]['m']:
         L[n - 3]['closed'] = True
     # 두 강세 형태 פָּנָֽיַ: 끝 요드의 파타는 읽지 않는다 (파나이)
     if n >= 3 and cons[-1] == 'י' and PATAH in L[-1]['m'] and QAMETS in L[-2]['m']:
@@ -323,7 +330,7 @@ def spoken(word, force=None):
     if ''.join(x['c'] for x in L).endswith('יהוה'):
         pre = w[:w.index('י')]
         if HIRIQ in L[-2]['m']:
-            return ud.normalize('NFC', pre + 'אֱלֹהִים')
+            return ud.normalize('NFC', pre + ('אלֹהִים' if len(L) > 4 and TSERE in L[-5]['m'] else 'אֱלֹהִים'))
         return ud.normalize('NFC', pre + ('אדֹנָי' if PATAH in pre else 'אֲדֹנָי'))
     info = []
     hebrew(w, info, force)
@@ -450,6 +457,14 @@ if __name__ == '__main__':
         (lambda w: hebrew(w, force={0: 'o'}), 'מָשְׁזָר', 'moshzar', '모쉬자르'),
         (lambda w: hebrew(w, force={0: 'o', 1: 'o'}), 'תָעָבְדֵם', "to'ovdem", '토오브뎀'),
         (lambda w: hebrew(w, force={0: 'o'}), 'חָכְמָה', 'chokhma', '호크마'),
+        # 시편: 요드 밑 숨은 파타, 체레 뒤 יהוִה, 휴지형 니팔 1복, 휴지형 3여단 + 1단 접미사, 힌트(겹자음 명령형, 아합 접미사, 관계사 뒤 요드)
+        (hebrew, 'הוֹפִֽיַע', 'hofia', '호피아'),
+        (hebrew, 'וְלֵיהוִה', 'velelohim', '벨렐로힘'),
+        (hebrew, 'נִמְלָֽטְנוּ', 'nimlatnu', '님라트누'),
+        (hebrew, 'כִּסָּֽתְנִי', 'kisatni', '키사트니'),
+        (lambda w: hebrew(w, force={0: 'o'}), 'חָנֵּנִי', 'choneni', '호네니'),
+        (lambda w: hebrew(w, force={1: 'o', 2: 'o'}), 'בְאָהָלְךָ', "ve'oholkha", '베오홀카'),
+        (lambda w: hebrew(w, force={1: 'e'}), 'שֶׁיְשַׁלֶּם', 'sheyeshalem', '셰예샬렘'),
         (lambda w: hebrew(w, force={1: 'o'}), 'שְׁמָר', 'shemor', '셰모르'),
         (lambda w: hebrew(w, force={1: 'a'}), 'מְשָׁרְתוֹ', 'meshareto', '메샤레토'),
         (lambda w: hebrew(w, force={1: 'a'}), 'לְשָׁרְתוֹ', 'leshareto', '레샤레토'),

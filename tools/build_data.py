@@ -182,8 +182,9 @@ ARAM_NOTE = '아람어입니다. 동사 줄기는 아람어 이름(페알·파�
 
 # 카메츠+슈와가 늘 카메츠 하투프(o)인 낱말: 첫 어근 글자의 카메츠를 o로 읽는다
 # 스트롱 표제어가 o가 아닌 모음으로 적힌 명사: שֹׁרֶשׁ (스트롱 שֶׁרֶשׁ) → שָׁרְשֵׁי (쇼르셰, 욥 13:27)
+TEXT_FIX['בְּ/שְׂפְתוֹתֶ֑י/ךָ'] = 'בְּ/שִׂפְתוֹתֶ֑י/ךָ'   # 시 45:3 쉰에 히렉 대신 슈와가 찍힘 (베시프토테카)
 O_LEMMA_SID = {'H8328'}
-HATUF_SID = {'H6944', 'H2451', 'H5797', 'H2706', 'H3801', 'H4888', 'H4893', 'H7141', 'H7145', 'H2670', 'H6195', 'H70', 'H551', 'H8483', 'H6995', 'H1799'}
+HATUF_SID = {'H7438', 'H168', 'H6944', 'H2451', 'H5797', 'H2706', 'H3801', 'H4888', 'H4893', 'H7141', 'H7145', 'H2670', 'H6195', 'H70', 'H551', 'H8483', 'H6995', 'H1799'}
 O_MARKS = {pron.HOLAM, pron.HOLAM_H, pron.QATAN, pron.HQAM, pron.QUBUTS}
 
 
@@ -222,6 +223,14 @@ def pron_hints(pieces, codes, sids, maqqef, aram=False):
                 force[start + first_qs] = 'o'
             elif stem == 'q' and conj == 'v' and first_qs is not None:        # 칼 명령형 + 접미사: הָרְגֵנִי (호르게니)
                 force[start + first_qs] = 'o'
+            elif stem == 'q' and conj == 'v' and qs and qs[0] == 0 and len(L) > 1 and pron.DAGESH in L[1]['m']:
+                force[start] = 'o'                                            # 겹자음 동사 명령형: חָנֵּנִי (호네니, 시 4:1)
+            elif stem in 'mM' and first_qs is not None:                       # 포엘 분사: מְלָשְׁנִי (멜로셰니, 시 101:5)
+                force[start + first_qs] = 'o'
+            elif stem == 'j' and qs and qs[0] == 0:                           # 페알랄: יָפְיָפִיתָ (요프야피타, 시 45:2)
+                force[start] = 'o'
+            elif stem == 'q' and conj == 'p' and first_qs is not None and lemma_has_o(sid, L, first_qs) and 'ֽ' not in L[first_qs]['m']:
+                force[start + first_qs] = 'o'                                 # 표제어가 o인 상태 동사: יְכָלְתִּיו (예콜티브, 시 13:5). 휴지형 שָׁכָֽלְתִּי (샤칼티, 창 43:14)는 길다
             elif stem == 'q' and conj in 'iwhj' and first_qs is not None and k + 1 < len(codes) and codes[k + 1][0] == 'S' \
                     and sid not in A_CLASS_SID:
                 force[start + first_qs] = 'o'                                 # 칼 미완료 + 접미사: נֶאֱסָרְךָ (네에소르카, 삿 15:13)
@@ -237,7 +246,7 @@ def pron_hints(pieces, codes, sids, maqqef, aram=False):
         elif code[0] in 'NA' and sid:
             if sid in HATUF_SID and qs and qs[0] == 0:                        # קָדְשֶׁךָ, קָֽדָשִׁים (코다쉼)
                 force[start] = 'o'
-                if len(L) > 2 and 1 in qs and pron.DAGESH in L[2]['m']:       # 겹자음 앞 닫힌 음절도 o: קָטָנִּי (코토니, 왕상 12:10)
+                if len(L) > 2 and 1 in qs and (pron.DAGESH in L[2]['m'] or sid == 'H168'):   # 겹자음 앞 닫힌 음절도 o: קָטָנִּי (코토니, 왕상 12:10), בְאָהָלְךָ (베오홀카, 시 61:5)
                     force[start + 1] = 'o'
             elif first_qs is not None and (lemma_has_o(sid, L, first_qs) or sid in O_LEMMA_SID):
                 force[start + first_qs] = 'o'                                 # 표제어가 o인 명사: אָבְנַיִם (오브나임)
@@ -251,7 +260,11 @@ def pron_hints(pieces, codes, sids, maqqef, aram=False):
             nl = pron._he_letters(pieces[k + 1])
             if nl and nl[0]['c'] == 'י' and pron.SHEVA in nl[0]['m']:
                 force[start + len(L)] = 'e'
-        if aram and sid == 'H6925' and qs:                                   # 아람어 קֳדָם־ (코담)
+        if code[0] == 'T' and code[1:2] == 'r' and k + 1 < nseg:               # 관계사 뒤 다게쉬 빠진 요드 슈와: שֶׁיְשַׁלֶּם (셰예샬렘, 시 137:8)
+            nl = pron._he_letters(pieces[k + 1])
+            if nl and nl[0]['c'] == 'י' and pron.SHEVA in nl[0]['m'] and pron.DAGESH not in nl[0]['m']:
+                force[start + len(L)] = 'e'
+        if aram and sid == 'H6925' and qs:                                 # 아람어 קֳדָם־ (코담)
             force[start + qs[-1]] = 'a'
         start += len(L)
     if aram:                                                                     # 아람어 하텝 카메츠 앞 카메츠는 길다: לָקֳבֵל (라코벨), אֲבָהֳתַנָא (아바호타나)
@@ -353,7 +366,17 @@ def to_translation_ref(book, c, v):
             return 7, v + 1
         if c == 10:
             return (9, 38) if v == 1 else (10, v - 1)
+    if book == 'Ps':    # 히브리어는 표제를 1절(51·52·54·60편은 1~2절)로 센다. 번역본에는 절 번호가 없어 1절에 합친다
+        t = PS_TITLE.get(c, 0)
+        return (c, 1) if v <= t + 1 else (c, v - t)
     return c, v
+
+
+# 시편 표제가 차지하는 히브리어 절 수 (세 원본의 장별 절 수 차이로 확인)
+PS_TITLE = {c: 1 for c in (3, 4, 5, 6, 7, 8, 9, 12, 18, 19, 20, 21, 22, 30, 31, 34, 36, 38, 39, 40, 41, 42, 44, 45, 46, 47, 48, 49,
+                           53, 55, 56, 57, 58, 59, 61, 62, 63, 64, 65, 67, 68, 69, 70, 75, 76, 77, 80, 81, 83, 84, 85, 88, 89, 92,
+                           102, 108, 140, 142)}
+PS_TITLE.update({51: 2, 52: 2, 54: 2, 60: 2})
 
 
 # 번역본에만 있고 히브리어 원문에 없는 절 (권 번호, 장): 절 목록. 원어 칸은 비워 둔다
@@ -392,7 +415,11 @@ def parse_hebrew(src, ch):
             words[0]['note'] = f'히브리어 성경에서는 {he_ch}:{he_v}절입니다. 번역본과 절 번호가 다릅니다.'
         for w in words:
             w.pop('_ctx', None)
-        if v_n in verses:   # 민수기 26:1은 히브리어 25:19와 26:1을 합친다
+        if osis[0] == 'Ps' and he_v <= PS_TITLE.get(he_ch, 0):
+            words[0]['note'] = f'시의 표제입니다. 히브리어 성경은 표제를 {he_ch}:{he_v}절로 세고, 번역본은 절 번호 없이 앞에 둡니다.'
+        elif osis[0] == 'Ps' and v_n in verses:
+            words[0]['note'] = f'여기부터 1절 본문입니다. 히브리어 성경에서는 {he_ch}:{he_v}절입니다.'
+        elif v_n in verses:   # 민수기 26:1은 히브리어 25:19와 26:1을 합친다
             words[0]['note'] = f'여기부터 히브리어 성경 {he_ch}:{he_v}절입니다. 앞부분은 히브리어 성경에서 앞 절입니다.'
         verses.setdefault(v_n, []).extend(words)
     return verses
@@ -449,7 +476,11 @@ def parse_greek(src, ch):
 
 def side_text(name, book, ch):
     d = json.loads((RAW / f'{name}-{book}-{ch}.json').read_text(encoding='utf-8'))
-    return {v['verse']: v['text'].strip() for v in d['verses']}
+    out = {v['verse']: v['text'].strip() for v in d['verses']}
+    if (name, book, ch) == ('korean', 19, 72) and 20 not in out:   # 개역한글 시편 72:20이 19절에 붙어 있다
+        out[19], out[20] = (x.strip() for x in out[19].split('이새의 아들', 1))
+        out[20] = '이새의 아들 ' + out[20]
+    return out
 
 
 PARTS = [
@@ -483,6 +514,11 @@ PARTS = [
     {'file': 'est-01-10', 'title': '에스더 1~10장', 'name': '에스더', 'book': 17, 'lang': 'he', 'chs': range(1, 11), 'parse': parse_hebrew, 'src': 'Esth.xml'},
     {'file': 'job-01-21', 'title': '욥기 1~21장', 'name': '욥기', 'book': 18, 'lang': 'he', 'chs': range(1, 22), 'parse': parse_hebrew, 'src': 'Job.xml'},
     {'file': 'job-22-42', 'title': '욥기 22~42장', 'name': '욥기', 'book': 18, 'lang': 'he', 'chs': range(22, 43), 'parse': parse_hebrew, 'src': 'Job.xml'},
+    {'file': 'psa-001-041', 'title': '시편 1~41편', 'name': '시편', 'book': 19, 'lang': 'he', 'chs': range(1, 42), 'parse': parse_hebrew, 'src': 'Ps.xml', 'unit': '편'},
+    {'file': 'psa-042-072', 'title': '시편 42~72편', 'name': '시편', 'book': 19, 'lang': 'he', 'chs': range(42, 73), 'parse': parse_hebrew, 'src': 'Ps.xml', 'unit': '편'},
+    {'file': 'psa-073-089', 'title': '시편 73~89편', 'name': '시편', 'book': 19, 'lang': 'he', 'chs': range(73, 90), 'parse': parse_hebrew, 'src': 'Ps.xml', 'unit': '편'},
+    {'file': 'psa-090-106', 'title': '시편 90~106편', 'name': '시편', 'book': 19, 'lang': 'he', 'chs': range(90, 107), 'parse': parse_hebrew, 'src': 'Ps.xml', 'unit': '편'},
+    {'file': 'psa-107-150', 'title': '시편 107~150편', 'name': '시편', 'book': 19, 'lang': 'he', 'chs': range(107, 151), 'parse': parse_hebrew, 'src': 'Ps.xml', 'unit': '편'},
     {'file': 'jhn-01', 'title': '요한복음 1장', 'name': '요한복음', 'book': 43, 'lang': 'gr', 'chs': [1], 'parse': parse_greek, 'src': 'Jn.txt'},
 ]
 
@@ -496,7 +532,7 @@ for part in PARTS:
         for n in NO_ORIGINAL.get((part['book'], ch), []):
             words[n] = []
         assert set(ko) == set(en) == set(words), (part['name'], ch, len(ko), len(en), len(words))
-        chapters.append({'id': f"{part['name']} {ch}장", 'lang': part['lang'],
+        chapters.append({'id': f"{part['name']} {ch}{part.get('unit', '장')}", 'lang': part['lang'],
                          'verses': [{'n': n, 'ko': ko[n], 'en': en[n], 'w': words[n]} for n in sorted(words)]})
     path = OUT / f"{part['file']}.json"
     path.parent.mkdir(parents=True, exist_ok=True)
