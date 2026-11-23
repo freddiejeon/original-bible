@@ -6,3 +6,5 @@ dist/
 tools/_missing.txt
 __pycache__/
 CLAUDE.md
+tools/_gloss_draft.json
+tools/_gloss_review.txt
