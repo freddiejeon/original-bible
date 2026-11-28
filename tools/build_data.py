@@ -185,6 +185,7 @@ ARAM_NOTE = '아람어입니다. 동사 줄기는 아람어 이름(페알·파�
 TEXT_FIX['בְּ/שְׂפְתוֹתֶ֑י/ךָ'] = 'בְּ/שִׂפְתוֹתֶ֑י/ךָ'   # 시 45:3 쉰에 히렉 대신 슈와가 찍힘 (베시프토테카)
 TEXT_FIX['ו֝/רְמִיָּ֗ה'] = 'וּ֝/רְמִיָּ֗ה'   # 잠 12:24 접속사 와우에 슈렉 점이 빠짐 (우레미야)
 TEXT_FIX['ו/טוֹבִֽים'] = 'וּ/טוֹבִֽים'   # 잠 15:3 (우토빔)
+TEXT_FIX['לִבּ֑/ו'] = 'לִבּ֑/וֹ'   # 전 2:22 접미사 와우에 홀렘이 빠짐 (립보)
 TEXT_FIX['חַיֶּֽי/ה'] = 'חַיֶּֽי/הָ'   # 잠 31:12 3여단 접미사의 카메츠가 빠짐 (하예하, WLC도 특이 철자로 표시)
 O_LEMMA_SID = {'H8328'}
 HATUF_SID = {'H7438', 'H168', 'H6944', 'H2451', 'H5797', 'H2706', 'H3801', 'H4888', 'H4893', 'H7141', 'H7145', 'H2670', 'H6195', 'H70', 'H551', 'H8483', 'H6995', 'H1799'}
@@ -267,6 +268,10 @@ def pron_hints(pieces, codes, sids, maqqef, aram=False):
             nl = pron._he_letters(pieces[k + 1])
             if nl and pron.HQAM in nl[0]['m']:
                 force[start + len(L) - 1] = 'a'
+        if code[0] == 'R' and k + 1 < nseg and L and pron.HIRIQ in L[-1]['m']:   # 히렉 전치사 뒤 모음 없는 요드는 묵음, 다음 슈와도 묵음: כִּיתְרוֹן (키트론, 전 2:13)
+            nl = pron._he_letters(pieces[k + 1])
+            if len(nl) > 1 and nl[0]['c'] == 'י' and not nl[0]['m'] and pron.SHEVA in nl[1]['m']:
+                force[start + len(L) + 1] = '-'
         if code[0] == 'T' and code[1:2] == 'r' and k + 1 < nseg:               # 관계사 뒤 다게쉬 빠진 요드 슈와: שֶׁיְשַׁלֶּם (셰예샬렘, 시 137:8)
             nl = pron._he_letters(pieces[k + 1])
             if nl and nl[0]['c'] == 'י' and pron.SHEVA in nl[0]['m'] and pron.DAGESH not in nl[0]['m']:
@@ -373,6 +378,11 @@ def to_translation_ref(book, c, v):
             return 7, v + 1
         if c == 10:
             return (9, 38) if v == 1 else (10, v - 1)
+    if book == 'Eccl':  # 히브리어 4:17이 번역본 5:1이고 5장은 한 칸씩 밀린다
+        if (c, v) == (4, 17):
+            return 5, 1
+        if c == 5:
+            return 5, v + 1
     if book == 'Ps':    # 히브리어는 표제를 1절(51·52·54·60편은 1~2절)로 센다. 번역본에는 절 번호가 없어 1절에 합친다
         t = PS_TITLE.get(c, 0)
         return (c, 1) if v <= t + 1 else (c, v - t)
@@ -527,6 +537,7 @@ PARTS = [
     {'file': 'psa-090-106', 'title': '시편 90~106편', 'name': '시편', 'book': 19, 'lang': 'he', 'chs': range(90, 107), 'parse': parse_hebrew, 'src': 'Ps.xml', 'unit': '편'},
     {'file': 'psa-107-150', 'title': '시편 107~150편', 'name': '시편', 'book': 19, 'lang': 'he', 'chs': range(107, 151), 'parse': parse_hebrew, 'src': 'Ps.xml', 'unit': '편'},
     {'file': 'pro-01-31', 'title': '잠언 1~31장', 'name': '잠언', 'book': 20, 'lang': 'he', 'chs': range(1, 32), 'parse': parse_hebrew, 'src': 'Prov.xml'},
+    {'file': 'ecc-01-12', 'title': '전도서 1~12장', 'name': '전도서', 'book': 21, 'lang': 'he', 'chs': range(1, 13), 'parse': parse_hebrew, 'src': 'Eccl.xml'},
     {'file': 'jhn-01', 'title': '요한복음 1장', 'name': '요한복음', 'book': 43, 'lang': 'gr', 'chs': [1], 'parse': parse_greek, 'src': 'Jn.txt'},
 ]
 

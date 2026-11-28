@@ -105,7 +105,7 @@ def _perpetual_qere(word):
 def hebrew(word, info=None, force=None):
     """모음 부호가 붙은 히브리어 단어(접두사 구분 '/' 없이)를 토큰으로 바꾼다.
 
-    force: {글자 번호: 'o' | 'a' | 'e'}. 형태 분석으로 정한 읽기(카메츠 하투프 o, 긴 카메츠 a, 소리 나는 슈와 e)를
+    force: {글자 번호: 'o' | 'a' | 'e' | '-'}. 형태 분석으로 정한 읽기(카메츠 하투프 o, 긴 카메츠 a, 소리 나는 슈와 e, 묵음 슈와 -)를
     규칙보다 앞세운다. 번호는 자음 글자 기준(0부터)이다.
     """
     word = _perpetual_qere(word)
@@ -237,6 +237,8 @@ def hebrew(word, info=None, force=None):
     for i, v in (force or {}).items():
         if v == 'e':
             L[i]['vocal'] = True
+        elif v == '-':
+            L[i]['closed'] = True
         else:
             L[i]['v'] = v
 
@@ -463,6 +465,7 @@ if __name__ == '__main__':
         (hebrew, 'נִמְלָֽטְנוּ', 'nimlatnu', '님라트누'),
         (hebrew, 'כִּסָּֽתְנִי', 'kisatni', '키사트니'),
         (lambda w: hebrew(w, force={0: 'o'}), 'חָנֵּנִי', 'choneni', '호네니'),
+        (lambda w: hebrew(w, force={2: '-'}), 'כִּיתְרוֹן', 'kitron', '키트론'),
         (lambda w: hebrew(w, force={1: 'o', 2: 'o'}), 'בְאָהָלְךָ', "ve'oholkha", '베오홀카'),
         (lambda w: hebrew(w, force={1: 'e'}), 'שֶׁיְשַׁלֶּם', 'sheyeshalem', '셰예샬렘'),
         (lambda w: hebrew(w, force={0: 'a'}), 'בָּאֳהָבִים', "ba'ohavim", '바오하빔'),
