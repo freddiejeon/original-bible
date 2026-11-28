@@ -186,9 +186,11 @@ TEXT_FIX['בְּ/שְׂפְתוֹתֶ֑י/ךָ'] = 'בְּ/שִׂפְתוֹתֶ�
 TEXT_FIX['ו֝/רְמִיָּ֗ה'] = 'וּ֝/רְמִיָּ֗ה'   # 잠 12:24 접속사 와우에 슈렉 점이 빠짐 (우레미야)
 TEXT_FIX['ו/טוֹבִֽים'] = 'וּ/טוֹבִֽים'   # 잠 15:3 (우토빔)
 TEXT_FIX['לִבּ֑/ו'] = 'לִבּ֑/וֹ'   # 전 2:22 접미사 와우에 홀렘이 빠짐 (립보)
+TEXT_FIX['כָּרְמִ֥/י'] = 'כַּרְמִ֥/י'   # 아 8:12 카메츠로 적힌 כַּרְמִי (1:6과 같게, 카르미)
+TEXT_FIX['קְוּצּוֹתָי/ו֙'] = 'קְוֻּצּוֹתָי/ו֙'   # 아 5:11 와우에 키부츠가 빠짐 (5:2와 같게, 케부초타브)
 TEXT_FIX['חַיֶּֽי/ה'] = 'חַיֶּֽי/הָ'   # 잠 31:12 3여단 접미사의 카메츠가 빠짐 (하예하, WLC도 특이 철자로 표시)
 O_LEMMA_SID = {'H8328'}
-HATUF_SID = {'H7438', 'H168', 'H6944', 'H2451', 'H5797', 'H2706', 'H3801', 'H4888', 'H4893', 'H7141', 'H7145', 'H2670', 'H6195', 'H70', 'H551', 'H8483', 'H6995', 'H1799'}
+HATUF_SID = {'H7438', 'H168', 'H6944', 'H2451', 'H5797', 'H2706', 'H3801', 'H4888', 'H4893', 'H7141', 'H7145', 'H2670', 'H6195', 'H70', 'H551', 'H8483', 'H6995', 'H1799', 'H542'}
 O_MARKS = {pron.HOLAM, pron.HOLAM_H, pron.QATAN, pron.HQAM, pron.QUBUTS}
 
 
@@ -201,7 +203,7 @@ def lemma_has_o(sid, letters, j):
 
 
 # 칼 미완료가 a 모음인 동사: 접미사가 붙어도 카메츠가 길다 (יִשְׁאָלְךָ 이쉬알레카, יִירָשְׁךָ 이라셰카, אִיעָצְךָ 이아체카)
-A_CLASS_SID = {'H7592', 'H3423', 'H3289', 'H3988'}
+A_CLASS_SID = {'H7592', 'H3423', 'H3289', 'H3988', 'H5401'}
 
 
 def lemma_has_qamets(sid, letters, j):
@@ -378,6 +380,8 @@ def to_translation_ref(book, c, v):
             return 7, v + 1
         if c == 10:
             return (9, 38) if v == 1 else (10, v - 1)
+    if book == 'Song' and c == 7:   # 히브리어 7:1이 번역본 6:13이고 7장은 한 칸씩 당겨진다
+        return (6, 13) if v == 1 else (7, v - 1)
     if book == 'Eccl':  # 히브리어 4:17이 번역본 5:1이고 5장은 한 칸씩 밀린다
         if (c, v) == (4, 17):
             return 5, 1
@@ -497,6 +501,8 @@ def side_text(name, book, ch):
     if (name, book, ch) == ('korean', 19, 72) and 20 not in out:   # 개역한글 시편 72:20이 19절에 붙어 있다
         out[19], out[20] = (x.strip() for x in out[19].split('이새의 아들', 1))
         out[20] = '이새의 아들 ' + out[20]
+    if (name, book, ch) == ('korean', 22, 6) and not out[13].startswith('돌아오고'):   # getBible 개역한글 아가 6:13은 앞 절반이 빠져 있다 (대한성서공회본은 6:13~14로 나눔)
+        out[13] = '돌아오고 돌아오라 술람미 여자야 돌아오고 돌아오라 우리로 너를 보게 하라 ' + out[13]
     return out
 
 
@@ -538,6 +544,7 @@ PARTS = [
     {'file': 'psa-107-150', 'title': '시편 107~150편', 'name': '시편', 'book': 19, 'lang': 'he', 'chs': range(107, 151), 'parse': parse_hebrew, 'src': 'Ps.xml', 'unit': '편'},
     {'file': 'pro-01-31', 'title': '잠언 1~31장', 'name': '잠언', 'book': 20, 'lang': 'he', 'chs': range(1, 32), 'parse': parse_hebrew, 'src': 'Prov.xml'},
     {'file': 'ecc-01-12', 'title': '전도서 1~12장', 'name': '전도서', 'book': 21, 'lang': 'he', 'chs': range(1, 13), 'parse': parse_hebrew, 'src': 'Eccl.xml'},
+    {'file': 'sng-01-08', 'title': '아가 1~8장', 'name': '아가', 'book': 22, 'lang': 'he', 'chs': range(1, 9), 'parse': parse_hebrew, 'src': 'Song.xml'},
     {'file': 'jhn-01', 'title': '요한복음 1장', 'name': '요한복음', 'book': 43, 'lang': 'gr', 'chs': [1], 'parse': parse_greek, 'src': 'Jn.txt'},
 ]
 

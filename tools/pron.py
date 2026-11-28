@@ -466,6 +466,7 @@ if __name__ == '__main__':
         (hebrew, 'כִּסָּֽתְנִי', 'kisatni', '키사트니'),
         (lambda w: hebrew(w, force={0: 'o'}), 'חָנֵּנִי', 'choneni', '호네니'),
         (lambda w: hebrew(w, force={2: '-'}), 'כִּיתְרוֹן', 'kitron', '키트론'),
+        (lambda w: hebrew(w, force={0: 'o'}), 'אָמָּן', 'oman', '오만'),
         (lambda w: hebrew(w, force={1: 'o', 2: 'o'}), 'בְאָהָלְךָ', "ve'oholkha", '베오홀카'),
         (lambda w: hebrew(w, force={1: 'e'}), 'שֶׁיְשַׁלֶּם', 'sheyeshalem', '셰예샬렘'),
         (lambda w: hebrew(w, force={0: 'a'}), 'בָּאֳהָבִים', "ba'ohavim", '바오하빔'),
